@@ -1,6 +1,7 @@
 package com.tododuk.domain.user.controller
 
 import com.tododuk.domain.user.dto.UserDto
+import com.tododuk.domain.user.entity.User
 import com.tododuk.domain.user.service.FileUploadService
 import com.tododuk.domain.user.service.UserService
 import com.tododuk.global.exception.ServiceException
@@ -23,13 +24,14 @@ import java.util.function.Supplier
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/user")
 @Slf4j
-class UserController {
-    private val userService: UserService? = null
-    private val fileUploadService: FileUploadService? = null
-    private val rq: Rq? = null
+class UserController(
+    private val userService: UserService,
+    private val fileUploadService: FileUploadService,
+    private val rq: Rq
+) {
 
     @JvmRecord
-    public data class UserJoinReqDto(
+    data class UserJoinReqDto(
         val email: @NotBlank @Size(min = 2, max = 30) String,
         val password: @NotBlank @Size(min = 2, max = 30) String,
         val nickname: @NotBlank @Size(min = 2, max = 30) String
@@ -39,7 +41,7 @@ class UserController {
     fun join(
         @RequestBody @Valid reqBody: UserJoinReqDto
     ): ResponseEntity<*> {
-        if (userService!!.findByUserEmail(reqBody.email).isPresent()) {
+        if (userService.findByUserEmail(reqBody.email) != null) {
             val errorRsData = RsData<Void?>("409-1", "이미 존재하는 이메일입니다.", null)
             return ResponseEntity.status(HttpStatus.CONFLICT).body<RsData<Void?>?>(errorRsData)
         }
@@ -60,13 +62,13 @@ class UserController {
     }
 
     @JvmRecord
-    internal data class UserLoginReqDto(
-        val email: @NotBlank @Size(min = 2, max = 30) String?,
-        val password: @NotBlank @Size(min = 2, max = 30) String?
+    data class UserLoginReqDto(
+        val email: @NotBlank @Size(min = 2, max = 30) String,
+        val password: @NotBlank @Size(min = 2, max = 30) String
     )
 
     @JvmRecord
-    internal data class UserLoginResDto(
+    data class UserLoginResDto(
         val userDto: UserDto?,
         val apiKey: String?,
         val accessToken: String?
@@ -74,17 +76,17 @@ class UserController {
 
     @PostMapping("/login")
     fun login(
-        @RequestBody reqBody: @Valid UserLoginReqDto,
+        @RequestBody @Valid reqBody: UserLoginReqDto,
         response: HttpServletResponse?
     ): RsData<UserLoginResDto?> {
         println("로그인 요청: " + reqBody.email + ", " + reqBody.password)
-        val user = userService!!.findByUserEmail(reqBody.email)
-            .orElseThrow<ServiceException?>(Supplier { ServiceException("404-1", "존재하지 않는 이메일입니다.") })
+        val user = userService.findByUserEmail(reqBody.email)
+            ?: throw ServiceException("404-1", "존재하지 않는 이메일입니다.")
 
         // 비밀번호 체크
         userService.checkPassword(user, reqBody.password)
         // 로그인 성공 시 apiKey를 클라이언트 쿠키에 저장
-        rq!!.setCookie("apiKey", user.getApiKey())
+        rq.setCookie("apiKey", user.apiKey)
         //        Cookie apiKeyCookie = new Cookie("apiKey", user.getApiKey());
 //        apiKeyCookie.setPath("/");
 //        apiKeyCookie.setHttpOnly(true);
@@ -94,49 +96,47 @@ class UserController {
         rq.setCookie("accessToken", accessToken)
 
         //dto 안에 기본 정보만 포함되어있음
-        return RsData<T?>(
+        return RsData(
             "200-1",
-            "%s님 환영합니다.".formatted(user.getNickName()),
+            "${user.nickName}님 환영합니다.",
             UserLoginResDto(
                 UserDto(user),
-                user.getApiKey(),
+                user.apiKey,
                 accessToken
 
             )
         )
     }
 
-    @get:GetMapping("/me")
-    val myInfo: RsData<UserDto?>
-        // 내 정보 조회 : 고유번호, 이메일, 닉네임, 프로필 사진
-        get() {
-            // 현재 로그인한 사용자의 정보를 가져오기
-            val actor = rq!!.getActor()
-            val user = userService!!.findById(actor.getId())
-                .orElseThrow<ServiceException?>(Supplier {
-                    ServiceException(
-                        "404-1",
-                        "존재하지 않는 사용자입니다."
-                    )
-                })
-
-            return RsData<UserDto?>(
-                "200-1",
-                "내 정보 상세 조회 성공",
-                UserDto(user)
+    @GetMapping("/me")
+    fun getMyInfo(): RsData<UserDto?> {
+        // 현재 로그인한 사용자의 정보를 가져오기
+        val actor : User? = rq.getActor()
+        val user = userService.findById(actor!!.getId())
+            ?: throw ServiceException(
+                "404-1",
+                "존재하지 않는 사용자입니다."
             )
-        }
+
+        return RsData(
+            "200-1",
+            "내 정보 상세 조회 성공",
+            UserDto(user)
+        )
+    }
 
 
-    // 내 정보 수정 : 닉네임, 프로필 사진 변경 가능
+
     @PostMapping("/me")
     fun updateMyInfo(
         @RequestBody reqBody: @Valid UserDto
     ): RsData<UserDto?> {
-        // Authorization 헤더 대신 rq.getActor() 사용 (쿠키 기반 인증)
-        val actor = rq!!.getActor()
-        val user = userService!!.findById(actor.getId())
-            .orElseThrow<ServiceException?>(Supplier { ServiceException("404-1", "존재하지 않는 사용자입니다.") })
+        // 인증된 사용자 확인
+        val actor = rq.getActor()
+            ?: throw ServiceException("401-1", "인증된 사용자가 아닙니다.")
+
+        val user = userService.findById(actor.getId())
+            ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
         userService.updateUserInfo(user, reqBody)
 
@@ -152,30 +152,28 @@ class UserController {
         @RequestParam("profileImage") file: MultipartFile?
     ): RsData<MutableMap<String?, String?>?> {
         // 현재 로그인한 사용자 정보 가져오기
-        val actor = rq!!.getActor()
-        if (actor == null) {
-            throw ServiceException("401-1", "로그인이 필요합니다.")
-        }
+        val actor = rq.getActor() ?: throw ServiceException("401-1", "로그인이 필요합니다.")
 
-        val user = userService!!.findById(actor.getId())
-            .orElseThrow<ServiceException?>(Supplier { ServiceException("404-1", "존재하지 않는 사용자입니다.") })
+
+        val user = userService.findById(actor.getId())
+            ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
         // 기존 프로필 이미지가 있다면 삭제
-        if (user.getProfileImgUrl() != null && !user.getProfileImgUrl().isEmpty()) {
-            fileUploadService!!.deleteProfileImage(user.getProfileImgUrl())
+        user.profileImgUrl?.takeIf { it.isNotEmpty() }?.let {
+            fileUploadService.deleteProfileImage(it)
         }
 
         // 새 프로필 이미지 업로드
-        val imageUrl = fileUploadService!!.uploadProfileImage(file, user.getId().toLong())
+        val imageUrl = fileUploadService.uploadProfileImage(file, user.getId().toLong())
 
         // 사용자 정보 업데이트 - 기존 UserService의 updateUserInfo 메서드 활용
         val updateDto = UserDto(
-            user.getId(),
-            user.getUserEmail(),
-            user.getNickName(),
+            user.id,
+            user.userEmail,
+            user.nickName,
             imageUrl,  // 새로운 이미지 URL
-            user.getCreateDate(),
-            user.getModifyDate()
+            user.createDate,
+            user.modifyDate
         )
 
         userService.updateUserInfo(user, updateDto)
@@ -201,7 +199,7 @@ class UserController {
         }
 
         // 쿠키 삭제
-        rq!!.deleteCookie("apiKey")
+        rq.deleteCookie("apiKey")
         rq.deleteCookie("accessToken") // 이것도 있다면
         rq.deleteCookie("refreshToken") // 이것도 있다면
         rq.deleteCookie("JSESSIONID")
