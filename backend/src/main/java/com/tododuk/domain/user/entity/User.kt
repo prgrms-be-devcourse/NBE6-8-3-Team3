@@ -16,47 +16,41 @@ import lombok.NoArgsConstructor
 import java.util.*
 
 @Entity
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Table(name = "users")
-class User : BaseEntity {
-    private var userEmail: String?
+class User(
+    @Column(nullable = false, unique = true)
+    var userEmail: String,
 
-    private var password: String? = null
-    private var nickName: String? = null
+    var password: String? = null,
+    var nickName: String? = null,
 
     @Column(nullable = false)
-    private var isAdmin = false
-    private var profileImgUrl: String? = null
+    var isAdmin: Boolean = false,
+
+    var profileImgUrl: String? = null,
 
     @Column(unique = true)
-    private var apiKey: String? = null
+    var apiKey: String? = null,
 
     @OneToMany(mappedBy = "user")
-    private var todoLists: MutableList<TodoList?>? = null
+    var todoLists: MutableList<TodoList?>? = mutableListOf(),
 
     @OneToMany(mappedBy = "user")
-    private var teamMember: MutableList<TeamMember?>? = null
+    var teamMember: MutableList<TeamMember?>? = mutableListOf(),
 
     @OneToMany
-    private var labels: MutableList<Label?>? = null
+    var labels: MutableList<Label?>? = mutableListOf(),
 
     @OneToMany
-    private var notifications: MutableList<Notification?>? = null
+    var notifications: MutableList<Notification?>? = mutableListOf()
+) : BaseEntity() {
 
-    constructor(email: String?, password: String?, nickName: String?) {
-        this.userEmail = email
-        this.password = password
-        this.nickName = nickName
-        this.apiKey = UUID.randomUUID().toString()
-    }
-
-    constructor(id: Int, userEmail: String?) {
-        this.id = id
-        this.userEmail = userEmail
-    }
+    constructor(email: String, password: String?, nickName: String?) : this(
+        userEmail = email,
+        password = password,
+        nickName = nickName,
+        apiKey = UUID.randomUUID().toString()
+    )
 
     fun updateUserInfo(nickName: String?, profileImgUrl: String?) {
         this.nickName = nickName

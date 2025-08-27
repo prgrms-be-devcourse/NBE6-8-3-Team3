@@ -29,15 +29,15 @@ class UserController {
     private val rq: Rq? = null
 
     @JvmRecord
-    internal data class UserJoinReqDto(
-        val email: @NotBlank @Size(min = 2, max = 30) String?,
-        val password: @NotBlank @Size(min = 2, max = 30) String?,
-        val nickname: @NotBlank @Size(min = 2, max = 30) String?
+    public data class UserJoinReqDto(
+        val email: @NotBlank @Size(min = 2, max = 30) String,
+        val password: @NotBlank @Size(min = 2, max = 30) String,
+        val nickname: @NotBlank @Size(min = 2, max = 30) String
     )
 
     @PostMapping("/register")
     fun join(
-        @RequestBody reqBody: @Valid UserJoinReqDto
+        @RequestBody @Valid reqBody: UserJoinReqDto
     ): ResponseEntity<*> {
         if (userService!!.findByUserEmail(reqBody.email).isPresent()) {
             val errorRsData = RsData<Void?>("409-1", "이미 존재하는 이메일입니다.", null)
@@ -50,9 +50,9 @@ class UserController {
             reqBody.nickname
         )
 
-        val successRsData: RsData<UserDto?> = RsData<T?>(
+        val successRsData = RsData(
             "200-1",  // 나중에 201로 수정 가능
-            "%s님 환영합니다. 회원가입이 완료되었습니다.".formatted(user.getNickName()),
+            "${user.nickName}님 환영합니다. 회원가입이 완료되었습니다.",
             UserDto(user)
         )
 

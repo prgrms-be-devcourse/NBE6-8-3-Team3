@@ -6,17 +6,17 @@ import java.time.LocalDateTime
 @JvmRecord
 data class UserDto(
     val id: Int,
-    val nickname: String?,
+    @JvmField val nickname: String?,
     val email: String?,
-    val profileImageUrl: String?,
+    @JvmField val profileImageUrl: String?,
     val createDate: LocalDateTime?,
     val modifyDate: LocalDateTime?
 ) {
     constructor(user: User) : this(
         user.getId(),
-        user.getNickName(),
-        user.getUserEmail(),
-        user.getProfileImgUrl(),
+        user.nickName,
+        user.userEmail,
+        user.profileImgUrl,
         user.getCreateDate(),
         user.getModifyDate()
     )

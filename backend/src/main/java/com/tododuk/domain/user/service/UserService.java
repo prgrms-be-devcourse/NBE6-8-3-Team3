@@ -50,8 +50,8 @@ public class UserService {
 
     public void updateUserInfo(User user, UserDto reqBody) {
         user.updateUserInfo(
-                reqBody.nickname(),
-                reqBody.profileImageUrl()
+                reqBody.nickname,
+                reqBody.profileImageUrl
         );
     }
 
