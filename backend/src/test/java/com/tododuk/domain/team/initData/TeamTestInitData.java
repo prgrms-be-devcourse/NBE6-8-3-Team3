@@ -29,7 +29,7 @@ public class TeamTestInitData {
      * @param baseIdentifier 사용자 식별을 위한 기본 문자열 (예: "leader", "member")
      * @return 생성된 User 엔티티
      */
-    @Transactional
+
     public User createUser(String baseIdentifier) {
         String uniqueId = UUID.randomUUID().toString().substring(0, 8); // 고유한 짧은 문자열 생성
         String userEmail = baseIdentifier.toLowerCase() + "_" + uniqueId + "@test.com"; // 이메일을 고유하게
@@ -52,7 +52,7 @@ public class TeamTestInitData {
      * @param description 팀 설명
      * @return 생성된 Team 엔티티
      */
-    @Transactional
+
     public Team createTeam(String teamName, String description) {
         return teamRepository.save(Team.builder()
                 .teamName(teamName)
@@ -68,7 +68,7 @@ public class TeamTestInitData {
      * @param role 팀에서의 역할 (LEADER, MEMBER)
      * @return 생성된 TeamMember 엔티티
      */
-    @Transactional
+
     public TeamMember createTeamMember(User user, Team team, TeamRoleType role) {
         return teamMemberRepository.save(TeamMember.builder()
                 .user(user)
@@ -83,7 +83,7 @@ public class TeamTestInitData {
      * 모든 팀 관련 데이터 (팀 멤버, 팀) 및 사용자 데이터를 삭제합니다.
      * 각 테스트 메서드 실행 전 데이터 독립성을 위해 사용될 수 있습니다.
      */
-    @Transactional
+
     public void clearTeamRelatedData() {
         teamMemberRepository.deleteAllInBatch();
         teamRepository.deleteAllInBatch();
@@ -93,7 +93,7 @@ public class TeamTestInitData {
     /**
      * 특정 팀 멤버를 삭제합니다. (테스트 시나리오별로 필요할 때 호출)
      */
-    @Transactional
+
     public void deleteTeamMember(int teamMemberId) {
         teamMemberRepository.deleteById(teamMemberId);
     }

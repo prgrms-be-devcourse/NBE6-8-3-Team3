@@ -53,12 +53,15 @@ class TeamControllerTest {
     @Autowired
     private TeamRepository teamRepository;
 
+
+
     @MockBean
     private Rq rq;
 
     private User leaderUser;
     private User memberUser;
     private Team testTeam;
+
 
     @BeforeEach
     void setUp() {
@@ -73,6 +76,8 @@ class TeamControllerTest {
         teamTestInitData.createTeamMember(leaderUser, testTeam, TeamRoleType.LEADER);
         teamTestInitData.createTeamMember(memberUser, testTeam, TeamRoleType.MEMBER);
     }
+
+
 
     // 테스트용 예외 처리기 (내부 클래스로 정의)
     @RestControllerAdvice
@@ -105,16 +110,25 @@ class TeamControllerTest {
         when(rq.getActor()).thenReturn(leaderUser);
         TeamCreateRequestDto requestDto = new TeamCreateRequestDto("새로운 팀", "팀 설명");
 
-        // When & Then
-        mockMvc.perform(post("/api/v1/teams")
+        // When
+        String responseBody = mockMvc.perform(post("/api/v1/teams")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-OK"))
-                .andExpect(jsonPath("$.data.teamName").value("새로운 팀"));
+                .andExpect(jsonPath("$.data.teamName").value("새로운 팀"))
+                .andReturn().getResponse().getContentAsString();
 
-        assertThat(teamRepository.findAll()).hasSize(2);
+        // Then
+        // 응답 본문에서 'id'를 추출
+        Map<String, Object> responseMap = objectMapper.readValue(responseBody, Map.class);
+        Map<String, Object> data = (Map<String, Object>) responseMap.get("data");
+        Integer newTeamId = (Integer) data.get("id");
+
+        // 추출한 ID로 새로 생성된 팀이 DB에 존재하는지 확인
+        assertThat(teamRepository.findById(newTeamId)).isPresent();
+        assertThat(teamRepository.findById(newTeamId).get().getTeamName()).isEqualTo("새로운 팀");
     }
 
     @Test
