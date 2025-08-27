@@ -142,7 +142,7 @@ class TeamMemberControllerTest {
     void addTeamMemberSuccess() throws Exception {
         // Given
         when(rq.getActor()).thenReturn(leaderUser);
-        TeamMemberAddRequestDto addDto = new TeamMemberAddRequestDto(newMemberUser.getId(), TeamRoleType.MEMBER);
+        TeamMemberAddRequestDto addDto = new TeamMemberAddRequestDto(newMemberUser.getUserEmail(), TeamRoleType.MEMBER);
         
         // When & Then
         mockMvc.perform(post("/api/v1/teams/{teamId}/members", testTeam.getId())
@@ -161,7 +161,7 @@ class TeamMemberControllerTest {
     void addTeamMemberFailure_NoPermission() throws Exception {
         // Given
         when(rq.getActor()).thenReturn(memberUser); // 리더가 아닌 일반 멤버
-        TeamMemberAddRequestDto addDto = new TeamMemberAddRequestDto(newMemberUser.getId(), TeamRoleType.MEMBER);
+        TeamMemberAddRequestDto addDto = new TeamMemberAddRequestDto(newMemberUser.getUserEmail(), TeamRoleType.MEMBER);
 
         // When & Then
         mockMvc.perform(post("/api/v1/teams/{teamId}/members", testTeam.getId())
