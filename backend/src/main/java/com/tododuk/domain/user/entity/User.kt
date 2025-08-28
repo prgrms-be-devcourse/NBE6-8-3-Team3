@@ -1,3 +1,4 @@
+
 package com.tododuk.domain.user.entity
 
 import com.tododuk.domain.label.entity.Label
@@ -5,13 +6,15 @@ import com.tododuk.domain.notification.entity.Notification
 import com.tododuk.domain.team.entity.TeamMember
 import com.tododuk.domain.todoList.entity.TodoList
 import com.tododuk.global.entity.BaseEntity
-import jakarta.persistence.*
-import lombok.Builder
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.OneToMany
+import jakarta.persistence.Table
 import java.util.*
 
 @Entity
 @Table(name = "users")
-class User : BaseEntity {
+open class User : BaseEntity {
 
     @Column(nullable = false, unique = true)
     var userEmail: String = ""
@@ -75,15 +78,64 @@ class User : BaseEntity {
 
     // Rq.getActor()에서 사용하는 생성자
     constructor(id: Int, email: String) : super() {
-        this.id = id  // BaseEntity의 int id 설정
+        this.id = id
         this.userEmail = email
-        this.password = ""  // 임시값
-        this.nickName = ""  // 임시값
-        this.apiKey = ""    // 임시값
+        this.password = ""
+        this.nickName = ""
+        this.apiKey = ""
     }
 
     fun updateUserInfo(nickName: String, profileImgUrl: String?) {
-        this.nickName = nickName  // 원본과 동일하게 null 체크 없이 할당
+        this.nickName = nickName
         this.profileImgUrl = profileImgUrl
+    }
+
+    // Java 코드와의 호환성을 위한 Builder 패턴
+    companion object {
+        @JvmStatic
+        fun builder(): UserBuilder = UserBuilder()
+    }
+
+    class UserBuilder {
+        private var userEmail: String = ""
+        private var password: String = ""
+        private var nickName: String = ""
+        private var isAdmin: Boolean = false
+        private var profileImgUrl: String? = null
+        private var apiKey: String = UUID.randomUUID().toString()
+
+        fun userEmail(email: String): UserBuilder {
+            this.userEmail = email
+            return this
+        }
+
+        fun password(password: String): UserBuilder {
+            this.password = password
+            return this
+        }
+
+        fun nickName(nickName: String): UserBuilder {
+            this.nickName = nickName
+            return this
+        }
+
+        fun isAdmin(isAdmin: Boolean): UserBuilder {
+            this.isAdmin = isAdmin
+            return this
+        }
+
+        fun profileImgUrl(url: String?): UserBuilder {
+            this.profileImgUrl = url
+            return this
+        }
+
+        fun apiKey(key: String): UserBuilder {
+            this.apiKey = key
+            return this
+        }
+
+        fun build(): User {
+            return User(userEmail, password, nickName, isAdmin, profileImgUrl, apiKey)
+        }
     }
 }

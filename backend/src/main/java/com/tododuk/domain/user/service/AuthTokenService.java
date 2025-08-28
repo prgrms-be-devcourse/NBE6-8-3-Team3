@@ -5,7 +5,6 @@ import com.tododuk.standard.util.Ut;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -18,7 +17,7 @@ public class AuthTokenService {
     private int accessTokenExpirationSeconds;
     //액세스 토큰 생성
     public String genAccessToken(User user) {
-        long id = user.id;
+        long id = user.getId();
         String email = user.getUserEmail();
 
         return Ut.jwt.toString(

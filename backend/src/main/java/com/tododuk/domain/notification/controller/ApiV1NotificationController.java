@@ -115,7 +115,7 @@ public class ApiV1NotificationController {
         User user = userService.findByUserEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        List<Notification> notifications = notificationService.getNotificationsByUserId(user.id);
+        List<Notification> notifications = notificationService.getNotificationsByUserId(user.getId());
         if (notifications.isEmpty()) {
             return new RsData<>("404-1", "알림이 존재하지 않습니다.");
         }

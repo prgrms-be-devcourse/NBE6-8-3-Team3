@@ -5,8 +5,6 @@ import com.tododuk.domain.todo.dto.TodoResponseDto;
 import com.tododuk.domain.todo.entity.Todo;
 import com.tododuk.domain.todo.service.TodoService;
 import com.tododuk.domain.todoLabel.service.TodoLabelService;
-import com.tododuk.domain.todoList.dto.TodoListResponseDto;
-import com.tododuk.domain.todoList.entity.TodoList;
 import com.tododuk.domain.todoList.service.TodoListService;
 
 import com.tododuk.domain.user.entity.User;
@@ -127,7 +125,7 @@ public class TodoController {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         try {
-            List<TodoResponseDto> todos = todoService.getUserTodo(user.id);
+            List<TodoResponseDto> todos = todoService.getUserTodo(user.getId());
             return ResponseEntity.ok(RsData.success("유저의 todo list 조회 성공", todos));
         } catch (Exception e) {
             throw new ServiceException("400-1", "todo가 존재하지 않습니다.");

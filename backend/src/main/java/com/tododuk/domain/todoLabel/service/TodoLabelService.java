@@ -27,7 +27,7 @@ public class TodoLabelService {
     @Transactional(readOnly = true)
     public List<Integer> getTodoLabelIdsByTodoIds(int todoId) {
         return todoLabelRepository.findByTodoId(todoId).stream()
-                .map(todoLabel -> todoLabel.getLabel().id)
+                .map(todoLabel -> todoLabel.getLabel().getId())
                 .collect(Collectors.toList());
     }
 
@@ -36,7 +36,7 @@ public class TodoLabelService {
     public List<LabelDto> getTodoLabelsByTodoId(int todoId) {
         return todoLabelRepository.findByTodoId(todoId).stream()
                 .map(todoLabel -> new LabelDto(
-                        todoLabel.getLabel().id,
+                        todoLabel.getLabel().getId(),
                         todoLabel.getLabel().getName(),
                         todoLabel.getLabel().getColor()
                 ))
