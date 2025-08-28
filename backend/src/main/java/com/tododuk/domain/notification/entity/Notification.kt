@@ -18,8 +18,9 @@ class Notification(
     final var isRead: Boolean = false
         private set  // 외부에서 직접 변경 불가
 
-    fun markAsRead() {
+  fun markAsRead() {
         this.isRead = true
     }
+
 
 }
