@@ -1,8 +1,9 @@
-package com.tododuk.domain.reminder.repository;
+package com.tododuk.domain.reminder.repository
 
-import com.tododuk.domain.reminder.entity.Reminder;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.tododuk.domain.reminder.entity.Reminder
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
 
-public interface ReminderRepository extends JpaRepository<Reminder, Integer> {
-
+@Repository
+interface ReminderRepository: JpaRepository<Reminder, Int> {
 }
