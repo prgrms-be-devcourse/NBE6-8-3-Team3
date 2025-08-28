@@ -73,14 +73,12 @@ class BaseInitData(
             // 팀 생성
             val team1 = Team(
             "프론트엔드 개발팀",
-            "React, Next.js를 활용한 웹 프론트엔드 개발팀",
-            mutableListOf()
+            "React, Next.js를 활용한 웹 프론트엔드 개발팀"
             )
 
             val team2 = Team(
                 "백엔드 개발팀",
-                "Spring Boot, JPA를 활용한 백엔드 개발팀",
-                mutableListOf()
+                "Spring Boot, JPA를 활용한 백엔드 개발팀"
             )
 
             teamRepository.save<Team?>(team1)
