@@ -24,12 +24,12 @@ class Team(
 
     fun addMember(teamMember: TeamMember) {
         members.add(teamMember)
-        teamMember.setTeam(this)  // Java TeamMember와 호환
+        teamMember.team = this  // ✅ 이제 직접 접근 가능! - TeamMember 엔티티도 kotlin으로 변환하여 이렇게 리팩토링
     }
 
     fun removeMember(teamMember: TeamMember) {
         members.remove(teamMember)
-        teamMember.setTeam(null)  // Java TeamMember와 호환
+        teamMember.team = null  // ✅ 이제 직접 접근 가능!
     }
 
     // Builder 패턴 추가 (Java 호환성을 위해)
