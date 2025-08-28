@@ -28,7 +28,7 @@ public class BaseEntity {
     private LocalDateTime modifyDate;
 
     // 위에 getter를 써서 잠시 해놨습니다.
-//    public int getId() {
-//        return id;
-//    }
+    public int getId() {
+        return id;
+    }
 }
