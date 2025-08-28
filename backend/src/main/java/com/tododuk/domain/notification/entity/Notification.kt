@@ -1,3 +1,5 @@
+package com.tododuk.domain.notification.entity
+
 
 import com.tododuk.domain.user.entity.User
 import com.tododuk.global.entity.BaseEntity
