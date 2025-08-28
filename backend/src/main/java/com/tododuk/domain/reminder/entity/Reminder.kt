@@ -10,15 +10,15 @@ import java.time.LocalDateTime
 @Entity
 class Reminder (
     @ManyToOne()
-    var todo : Todo,
+    var todo: Todo?,
     var remindAt: LocalDateTime,
-    var method  : String
+    var method: String
 ) : BaseEntity(){
 
 
 
     protected constructor() : this(
-        todo = Todo(),
+        todo = null,
         remindAt = LocalDateTime.now(),
         method = ""
     )
