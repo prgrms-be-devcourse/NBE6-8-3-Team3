@@ -72,7 +72,7 @@ public class TeamMemberController {
     ) {
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamMemberService.getTeamMembers(teamId, authenticatedUser.getId());
+        return teamMemberService.getTeamMembers(teamId, authenticatedUser.id);
     }
 
 
@@ -85,7 +85,7 @@ public class TeamMemberController {
 
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamMemberService.addTeamMember(teamId, addDto, authenticatedUser.getId());
+        return teamMemberService.addTeamMember(teamId, addDto, authenticatedUser.id);
     }
 
 
@@ -99,7 +99,7 @@ public class TeamMemberController {
 
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamMemberService.updateTeamMemberRole(teamId, memberUserId, updateDto.getRole(), authenticatedUser.getId());
+        return teamMemberService.updateTeamMemberRole(teamId, memberUserId, updateDto.getRole(), authenticatedUser.id);
     }
 
 
@@ -112,6 +112,6 @@ public class TeamMemberController {
 
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamMemberService.deleteTeamMember(teamId, memberUserId, authenticatedUser.getId());
+        return teamMemberService.deleteTeamMember(teamId, memberUserId, authenticatedUser.id);
     }
 }

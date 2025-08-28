@@ -26,14 +26,14 @@ public class TodoResponseDto {
 
     public static TodoResponseDto from(Todo todo) {
         return new TodoResponseDto(
-                todo.getId(),
+                todo.id,
                 todo.getTitle(),
                 todo.getDescription(),
                 todo.isCompleted(),
                 todo.getPriority(),
                 todo.getStartDate(),
                 todo.getDueDate(),
-                todo.getTodoList().getId(),
+                todo.getTodoList().id,
                 todo.getCreateDate(),
                 todo.getModifyDate()
         );

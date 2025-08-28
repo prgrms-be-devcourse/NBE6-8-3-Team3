@@ -20,7 +20,7 @@ public record ReminderDto(
                 reminder.getTodo(),
                 reminder.getRemindAt(),
                 reminder.getMethod(),
-                reminder.getId(),
+                reminder.id,
                 reminder.getCreateDate(),
                 reminder.getModifyDate()
         );

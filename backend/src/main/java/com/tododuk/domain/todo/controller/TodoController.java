@@ -127,7 +127,7 @@ public class TodoController {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         try {
-            List<TodoResponseDto> todos = todoService.getUserTodo(user.getId());
+            List<TodoResponseDto> todos = todoService.getUserTodo(user.id);
             return ResponseEntity.ok(RsData.success("유저의 todo list 조회 성공", todos));
         } catch (Exception e) {
             throw new ServiceException("400-1", "todo가 존재하지 않습니다.");

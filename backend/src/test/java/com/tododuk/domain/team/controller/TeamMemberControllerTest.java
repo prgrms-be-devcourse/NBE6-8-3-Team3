@@ -114,7 +114,7 @@ class TeamMemberControllerTest {
         when(rq.getActor()).thenReturn(leaderUser);
         
         // When & Then
-        mockMvc.perform(get("/api/v1/teams/{teamId}/members", testTeam.getId()))
+        mockMvc.perform(get("/api/v1/teams/{teamId}/members", testTeam.id))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-OK"))
@@ -130,7 +130,7 @@ class TeamMemberControllerTest {
         when(rq.getActor()).thenReturn(newMemberUser); // 팀에 속하지 않은 사용자
         
         // When & Then
-        mockMvc.perform(get("/api/v1/teams/{teamId}/members", testTeam.getId()))
+        mockMvc.perform(get("/api/v1/teams/{teamId}/members", testTeam.id))
                 .andDo(print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.resultCode").value("403-NO_PERMISSION"))
@@ -145,7 +145,7 @@ class TeamMemberControllerTest {
         TeamMemberAddRequestDto addDto = new TeamMemberAddRequestDto(newMemberUser.getUserEmail(), TeamRoleType.MEMBER);
         
         // When & Then
-        mockMvc.perform(post("/api/v1/teams/{teamId}/members", testTeam.getId())
+        mockMvc.perform(post("/api/v1/teams/{teamId}/members", testTeam.id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(addDto)))
                 .andDo(print())
@@ -153,7 +153,7 @@ class TeamMemberControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("200-OK"))
                 .andExpect(jsonPath("$.data.userNickname").value(newMemberUser.getNickName()));
                 
-        assertThat(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.getId(), newMemberUser.getId())).isPresent();
+        assertThat(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.id, newMemberUser.id)).isPresent();
     }
 
     @Test
@@ -164,7 +164,7 @@ class TeamMemberControllerTest {
         TeamMemberAddRequestDto addDto = new TeamMemberAddRequestDto(newMemberUser.getUserEmail(), TeamRoleType.MEMBER);
 
         // When & Then
-        mockMvc.perform(post("/api/v1/teams/{teamId}/members", testTeam.getId())
+        mockMvc.perform(post("/api/v1/teams/{teamId}/members", testTeam.id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(addDto)))
                 .andDo(print())
@@ -181,7 +181,7 @@ class TeamMemberControllerTest {
         TeamMemberUpdateRequestDto updateDto = new TeamMemberUpdateRequestDto(TeamRoleType.LEADER);
         
         // When & Then
-        mockMvc.perform(patch("/api/v1/teams/{teamId}/members/{memberUserId}/role", testTeam.getId(), memberUser.getId())
+        mockMvc.perform(patch("/api/v1/teams/{teamId}/members/{memberUserId}/role", testTeam.id, memberUser.id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andDo(print())
@@ -189,7 +189,7 @@ class TeamMemberControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("200-OK"))
                 .andExpect(jsonPath("$.data.role").value(TeamRoleType.LEADER.name()));
 
-        assertThat(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.getId(), memberUser.getId()).get().getRole()).isEqualTo(TeamRoleType.LEADER);
+        assertThat(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.id, memberUser.id).get().getRole()).isEqualTo(TeamRoleType.LEADER);
     }
     
     @Test
@@ -200,7 +200,7 @@ class TeamMemberControllerTest {
         TeamMemberUpdateRequestDto updateDto = new TeamMemberUpdateRequestDto(TeamRoleType.LEADER);
 
         // When & Then
-        mockMvc.perform(patch("/api/v1/teams/{teamId}/members/{memberUserId}/role", testTeam.getId(), memberUser.getId())
+        mockMvc.perform(patch("/api/v1/teams/{teamId}/members/{memberUserId}/role", testTeam.id, memberUser.id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andDo(print())
@@ -216,12 +216,12 @@ class TeamMemberControllerTest {
         when(rq.getActor()).thenReturn(leaderUser);
 
         // When & Then
-        mockMvc.perform(delete("/api/v1/teams/{teamId}/members/{memberUserId}", testTeam.getId(), memberUser.getId()))
+        mockMvc.perform(delete("/api/v1/teams/{teamId}/members/{memberUserId}", testTeam.id, memberUser.id))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-OK"));
         
-        assertThat(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.getId(), memberUser.getId())).isNotPresent();
+        assertThat(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.id, memberUser.id)).isNotPresent();
     }
     
     @Test
@@ -231,7 +231,7 @@ class TeamMemberControllerTest {
         when(rq.getActor()).thenReturn(memberUser); // 리더가 아닌 일반 멤버
 
         // When & Then
-        mockMvc.perform(delete("/api/v1/teams/{teamId}/members/{memberUserId}", testTeam.getId(), memberUser.getId()))
+        mockMvc.perform(delete("/api/v1/teams/{teamId}/members/{memberUserId}", testTeam.id, memberUser.id))
                 .andDo(print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.resultCode").value("403-NO_PERMISSION"))
@@ -247,10 +247,10 @@ class TeamMemberControllerTest {
         when(rq.getActor()).thenReturn(leaderUser);
         
         // When
-        teamMemberRepository.delete(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.getId(), leader2.getId()).get());
+        teamMemberRepository.delete(teamMemberRepository.findByTeam_IdAndUser_Id(testTeam.id, leader2.id).get());
 
         // Then
-        mockMvc.perform(delete("/api/v1/teams/{teamId}/members/{memberUserId}", testTeam.getId(), leaderUser.getId()))
+        mockMvc.perform(delete("/api/v1/teams/{teamId}/members/{memberUserId}", testTeam.id, leaderUser.id))
                 .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.resultCode").value("409-LAST_LEADER_CANNOT_BE_REMOVED"))

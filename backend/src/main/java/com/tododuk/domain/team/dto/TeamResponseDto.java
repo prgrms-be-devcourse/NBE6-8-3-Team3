@@ -28,7 +28,7 @@ public class TeamResponseDto {
                 .collect(Collectors.toList());
 
         return TeamResponseDto.builder()
-                .id(team.getId())
+                .id(team.id)
                 .teamName(team.getTeamName())
                 .description(team.getDescription())
                 .createDate(team.getCreateDate())

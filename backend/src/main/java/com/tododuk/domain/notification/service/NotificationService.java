@@ -26,7 +26,7 @@ public class NotificationService {
     public NotificationDto CreateNotification(User user, String title, String description, String url) {
         Notification notification = new Notification(user, title, description, url);
         notificationRepository.save(notification);
-        return new NotificationDto(notification.getId(), user, title, description, url, false);
+        return new NotificationDto(notification.id, user, title, description, url, false);
     }
 
     public Notification findById(int id) {
@@ -50,13 +50,13 @@ public class NotificationService {
         User user = userService.findByUserEmail("awdawdawd@gamil.com").orElseThrow(() -> new IllegalArgumentException("User not found with email"));
         String title = reminder.data().todo().getTitle();
         String description = "Reminder for: " + reminder.data().todo().getDescription();
-        String url = "api/v1//todo/" + reminder.data().todo().getId();
+        String url = "api/v1//todo/" + reminder.data().todo().id;
         return CreateNotification(user, title, description, url);
     }
 
 
     public Notification updateNotificationStatus(Optional<Notification> notificationDto) {
-        Notification notification = findById(notificationDto.get().getId());
+        Notification notification = findById(notificationDto.get().id);
         notification.setIsRead(notificationDto.get().isRead());
         notificationRepository.save(notification);
         return notification;
