@@ -31,11 +31,11 @@ public class TodoListResponseDto {
                 .collect(Collectors.toList());
 
         return new TodoListResponseDto(
-                todoList.getId(),
+                todoList.id,
                 todoList.getName(),
                 todoList.getDescription(),
-                todoList.getUser().getId(),
-                todoList.getTeam().getId(),
+                todoList.getUser().id,
+                todoList.getTeam().id,
                 todoList.getCreateDate(),
                 todoList.getModifyDate(),
                 todos

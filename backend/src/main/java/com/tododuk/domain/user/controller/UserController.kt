@@ -111,8 +111,9 @@ class UserController(
     @GetMapping("/me")
     fun getMyInfo(): RsData<UserDto?> {
         // 현재 로그인한 사용자의 정보를 가져오기
-        val actor : User? = rq.getActor()
-        val user = userService.findById(actor!!.getId())
+        val actorId : Int = rq.getActorId()
+            ?: throw ServiceException("401-1", "인증된 사용자가 아닙니다.")
+        val user = userService.findById(actorId)
             ?: throw ServiceException(
                 "404-1",
                 "존재하지 않는 사용자입니다."
@@ -135,7 +136,7 @@ class UserController(
         val actor = rq.getActor()
             ?: throw ServiceException("401-1", "인증된 사용자가 아닙니다.")
 
-        val user = userService.findById(actor.getId())
+        val user = userService.findById(actor.id)
             ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
         userService.updateUserInfo(user, reqBody)
@@ -155,7 +156,7 @@ class UserController(
         val actor = rq.getActor() ?: throw ServiceException("401-1", "로그인이 필요합니다.")
 
 
-        val user = userService.findById(actor.getId())
+        val user = userService.findById(actor.id)
             ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
 
         // 기존 프로필 이미지가 있다면 삭제
@@ -164,7 +165,7 @@ class UserController(
         }
 
         // 새 프로필 이미지 업로드
-        val imageUrl = fileUploadService.uploadProfileImage(file, user.getId().toLong())
+        val imageUrl = fileUploadService.uploadProfileImage(file, user.id.toLong())
 
         // 사용자 정보 업데이트 - 기존 UserService의 updateUserInfo 메서드 활용
         val updateDto = UserDto(

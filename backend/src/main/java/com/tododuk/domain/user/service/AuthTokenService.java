@@ -18,7 +18,7 @@ public class AuthTokenService {
     private int accessTokenExpirationSeconds;
     //액세스 토큰 생성
     public String genAccessToken(User user) {
-        long id = user.getId();
+        long id = user.id;
         String email = user.getUserEmail();
 
         return Ut.jwt.toString(
@@ -28,7 +28,7 @@ public class AuthTokenService {
         );
     }
 
-    // 액세스 토큰에서 페이로드 추출
+    // 액세스 토큰에서 페이로드 추출 => (단순 토큰에서 값을 추출)
     public Map<String, Object> payload(String accessToken) {
         Map<String, Object> parsePayload = Ut.jwt.payload(jwtSecretKey, accessToken);
 

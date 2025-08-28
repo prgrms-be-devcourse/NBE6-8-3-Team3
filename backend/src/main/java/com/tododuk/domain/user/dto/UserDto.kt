@@ -13,12 +13,12 @@ data class UserDto(
     val modifyDate: LocalDateTime
 ) {
     constructor(user: User) : this(
-        user.getId(),
+        user.id,
         user.nickName,
         user.userEmail,
         user.profileImgUrl,
-        user.getCreateDate(),
-        user.getModifyDate()
+        user.createDate,
+        user.modifyDate
     )
 }
 

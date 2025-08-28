@@ -93,7 +93,7 @@ public class TeamController {
             @Valid @RequestBody TeamCreateRequestDto createDto) {
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamService.createTeam(createDto, authenticatedUser.getId());
+        return teamService.createTeam(createDto, authenticatedUser.id);
     }
 
     // 2. 팀 목록 조회
@@ -112,7 +112,7 @@ public class TeamController {
     @GetMapping("/my")
     public RsData<List<TeamResponseDto>> getMyTeams() {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getMyTeams(authenticatedUser.getId());
+        return teamService.getMyTeams(authenticatedUser.id);
     }
 
     // 3. 특정 팀 상세 조회
@@ -123,7 +123,7 @@ public class TeamController {
             @PathVariable("teamId") int teamId) {
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamService.getTeamDetails(teamId, authenticatedUser.getId());
+        return teamService.getTeamDetails(teamId, authenticatedUser.id);
     }
 
     // 4. 팀 정보 수정 (PATCH)
@@ -135,7 +135,7 @@ public class TeamController {
             @Valid @RequestBody TeamUpdateRequestDto updateDto) {
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamService.updateTeamInfo(teamId, updateDto, authenticatedUser.getId());
+        return teamService.updateTeamInfo(teamId, updateDto, authenticatedUser.id);
     }
 
     // 5. 팀 삭제
@@ -145,7 +145,7 @@ public class TeamController {
     public RsData<Void> deleteTeam(@PathVariable int teamId) {
         User authenticatedUser = getAuthenticatedUser();
         // 서비스로부터 받은 RsData 객체를 그대로 반환
-        return teamService.deleteTeam(teamId, authenticatedUser.getId());
+        return teamService.deleteTeam(teamId, authenticatedUser.id);
     }
 
     // 6. 팀 할일 목록 조회
@@ -154,7 +154,7 @@ public class TeamController {
             description = "지정된 팀의 할일 목록을 조회합니다. teamId가 0이면 개인 할일, 1 이상이면 팀 할일입니다. (팀 멤버만 가능)")
     public RsData<List<Map<String, Object>>> getTeamTodos(@PathVariable int teamId) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getTeamTodos(teamId, authenticatedUser.getId());
+        return teamService.getTeamTodos(teamId, authenticatedUser.id);
     }
 
     // 7. 팀 할일 추가
@@ -166,7 +166,7 @@ public class TeamController {
             @RequestBody Map<String, Object> todoRequest
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.addTeamTodo(teamId, authenticatedUser.getId(), todoRequest);
+        return teamService.addTeamTodo(teamId, authenticatedUser.id, todoRequest);
     }
 
     // 팀별 할일 목록 조회
@@ -175,7 +175,7 @@ public class TeamController {
             description = "지정된 팀의 할일 목록들을 조회합니다. (팀 멤버만 가능)")
     public RsData<List<Map<String, Object>>> getTeamTodoLists(@PathVariable int teamId) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getTeamTodoLists(teamId, authenticatedUser.getId());
+        return teamService.getTeamTodoLists(teamId, authenticatedUser.id);
     }
 
     // 팀 할일 목록 생성
@@ -187,7 +187,7 @@ public class TeamController {
             @RequestBody Map<String, Object> todoListRequest
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.createTeamTodoList(teamId, todoListRequest, authenticatedUser.getId());
+        return teamService.createTeamTodoList(teamId, todoListRequest, authenticatedUser.id);
     }
 
     // 팀 할일 목록 수정
@@ -200,7 +200,7 @@ public class TeamController {
             @RequestBody Map<String, Object> todoListRequest
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.updateTeamTodoList(teamId, todoListId, todoListRequest, authenticatedUser.getId());
+        return teamService.updateTeamTodoList(teamId, todoListId, todoListRequest, authenticatedUser.id);
     }
 
     // 팀 할일 목록 삭제
@@ -212,7 +212,7 @@ public class TeamController {
             @PathVariable int todoListId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.deleteTeamTodoList(teamId, todoListId, authenticatedUser.getId());
+        return teamService.deleteTeamTodoList(teamId, todoListId, authenticatedUser.id);
     }
 
     // 팀 할일 목록별 할일 조회
@@ -224,7 +224,7 @@ public class TeamController {
             @PathVariable int todoListId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getTeamTodosByList(teamId, todoListId, authenticatedUser.getId());
+        return teamService.getTeamTodosByList(teamId, todoListId, authenticatedUser.id);
     }
 
     // 팀 할일 목록에 할일 추가
@@ -237,7 +237,7 @@ public class TeamController {
             @RequestBody Map<String, Object> todoRequest
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.addTodoToTeamList(teamId, todoListId, todoRequest, authenticatedUser.getId());
+        return teamService.addTodoToTeamList(teamId, todoListId, todoRequest, authenticatedUser.id);
     }
 
     // 팀 할일 수정
@@ -250,7 +250,7 @@ public class TeamController {
             @RequestBody Map<String, Object> todoRequest
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.updateTeamTodo(teamId, todoId, todoRequest, authenticatedUser.getId());
+        return teamService.updateTeamTodo(teamId, todoId, todoRequest, authenticatedUser.id);
     }
 
     // 팀 할일 삭제
@@ -262,7 +262,7 @@ public class TeamController {
             @PathVariable int todoId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.deleteTeamTodo(teamId, todoId, authenticatedUser.getId());
+        return teamService.deleteTeamTodo(teamId, todoId, authenticatedUser.id);
     }
 
     // 팀 할일 완료 상태 토글
@@ -274,7 +274,7 @@ public class TeamController {
             @PathVariable int todoId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.toggleTeamTodoComplete(teamId, todoId, authenticatedUser.getId());
+        return teamService.toggleTeamTodoComplete(teamId, todoId, authenticatedUser.id);
     }
 
     // ===== 담당자 관리 API 엔드포인트들 =====
@@ -294,7 +294,7 @@ public class TeamController {
             throw new ServiceException("400-BAD_REQUEST", "담당자 ID는 필수입니다.");
         }
         
-        return teamService.assignTodoToMember(teamId, todoId, assignedUserId, authenticatedUser.getId());
+        return teamService.assignTodoToMember(teamId, todoId, assignedUserId, authenticatedUser.id);
     }
 
     @DeleteMapping("/{teamId}/todos/{todoId}/assign")
@@ -305,7 +305,7 @@ public class TeamController {
             @PathVariable int todoId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.unassignTodo(teamId, todoId, authenticatedUser.getId());
+        return teamService.unassignTodo(teamId, todoId, authenticatedUser.id);
     }
 
     @GetMapping("/{teamId}/todos/{todoId}/assign")
@@ -316,7 +316,7 @@ public class TeamController {
             @PathVariable int todoId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getTodoAssignment(teamId, todoId, authenticatedUser.getId());
+        return teamService.getTodoAssignment(teamId, todoId, authenticatedUser.id);
     }
 
     @GetMapping("/{teamId}/assignments")
@@ -324,7 +324,7 @@ public class TeamController {
             description = "지정된 팀의 모든 담당자 기록을 조회합니다. (팀 멤버만 가능)")
     public RsData<List<Map<String, Object>>> getTeamAssignments(@PathVariable int teamId) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getTeamAssignments(teamId, authenticatedUser.getId());
+        return teamService.getTeamAssignments(teamId, authenticatedUser.id);
     }
 
     // ===== 담당자 권한 확인 API 엔드포인트들 =====
@@ -337,7 +337,7 @@ public class TeamController {
             @PathVariable int todoId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getTodoAssignees(teamId, todoId, authenticatedUser.getId());
+        return teamService.getTodoAssignees(teamId, todoId, authenticatedUser.id);
     }
 
     @PostMapping("/{teamId}/todos/{todoId}/assignees")
@@ -356,7 +356,7 @@ public class TeamController {
             throw new ServiceException("400-BAD_REQUEST", "담당자 ID 목록은 필수입니다.");
         }
         
-        return teamService.assignMultipleTodoAssignees(teamId, todoId, assignedUserIds, authenticatedUser.getId());
+        return teamService.assignMultipleTodoAssignees(teamId, todoId, assignedUserIds, authenticatedUser.id);
     }
 
     @GetMapping("/{teamId}/todos/{todoId}/is-assignee")
@@ -367,11 +367,11 @@ public class TeamController {
             @PathVariable int todoId
     ) {
         User authenticatedUser = getAuthenticatedUser();
-        boolean isAssignee = teamService.isTodoAssignee(teamId, todoId, authenticatedUser.getId());
+        boolean isAssignee = teamService.isTodoAssignee(teamId, todoId, authenticatedUser.id);
         
         Map<String, Object> response = new HashMap<>();
         response.put("isAssignee", isAssignee);
-        response.put("userId", authenticatedUser.getId());
+        response.put("userId", authenticatedUser.id);
         response.put("todoId", todoId);
         
         return RsData.success("담당자 여부 확인 완료", response);
@@ -384,6 +384,6 @@ public class TeamController {
             description = "지정된 팀의 할일 통계를 조회합니다. (팀 멤버만 가능)")
     public RsData<Map<String, Object>> getTeamStats(@PathVariable int teamId) {
         User authenticatedUser = getAuthenticatedUser();
-        return teamService.getTeamStats(teamId, authenticatedUser.getId());
+        return teamService.getTeamStats(teamId, authenticatedUser.id);
     }
 }

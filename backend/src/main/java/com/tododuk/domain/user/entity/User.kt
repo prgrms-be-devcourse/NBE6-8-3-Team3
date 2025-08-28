@@ -6,6 +6,7 @@ import com.tododuk.domain.team.entity.TeamMember
 import com.tododuk.domain.todoList.entity.TodoList
 import com.tododuk.global.entity.BaseEntity
 import jakarta.persistence.*
+import lombok.Builder
 import java.util.*
 
 @Entity

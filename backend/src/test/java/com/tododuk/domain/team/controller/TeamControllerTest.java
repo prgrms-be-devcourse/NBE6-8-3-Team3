@@ -139,7 +139,7 @@ class TeamControllerTest {
         TeamUpdateRequestDto requestDto = new TeamUpdateRequestDto("수정된 팀 이름", "수정된 설명");
 
         // When & Then
-        mockMvc.perform(patch("/api/v1/teams/{teamId}", testTeam.getId())
+        mockMvc.perform(patch("/api/v1/teams/{teamId}", testTeam.id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andDo(print())
@@ -147,7 +147,7 @@ class TeamControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("200-OK"))
                 .andExpect(jsonPath("$.data.teamName").value("수정된 팀 이름"));
 
-        assertThat(teamRepository.findById(testTeam.getId()).get().getTeamName()).isEqualTo("수정된 팀 이름");
+        assertThat(teamRepository.findById(testTeam.id).get().getTeamName()).isEqualTo("수정된 팀 이름");
     }
 
     @Test
@@ -158,7 +158,7 @@ class TeamControllerTest {
         TeamUpdateRequestDto requestDto = new TeamUpdateRequestDto("수정된 팀 이름", "수정된 설명");
 
         // When & Then
-        mockMvc.perform(patch("/api/v1/teams/{teamId}", testTeam.getId())
+        mockMvc.perform(patch("/api/v1/teams/{teamId}", testTeam.id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andDo(print())
@@ -174,12 +174,12 @@ class TeamControllerTest {
         when(rq.getActor()).thenReturn(leaderUser);
 
         // When & Then
-        mockMvc.perform(delete("/api/v1/teams/{teamId}", testTeam.getId()))
+        mockMvc.perform(delete("/api/v1/teams/{teamId}", testTeam.id))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-OK"));
 
-        assertThat(teamRepository.findById(testTeam.getId())).isNotPresent();
+        assertThat(teamRepository.findById(testTeam.id)).isNotPresent();
     }
 
     @Test

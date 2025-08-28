@@ -19,6 +19,7 @@ class Rq(
 
     // Spring Security에서 현재 인증된 사용자(Principal)를 꺼내서,
     // User 엔티티 객체로 복원
+    // 시큐리티 표준 방법 (SecurityContext 안에서 추출하는 방식)
     fun getActor(): User? {
         return SecurityContextHolder.getContext()
             .authentication
@@ -26,6 +27,10 @@ class Rq(
             ?.takeIf { it is SecurityUser }
             ?.let { it as SecurityUser }
             ?.let { User(it.id, it.email) }
+    }
+    //로그인 사용자의 id만 반환하는 방식
+    fun getActorId(): Int? {
+        return (SecurityContextHolder.getContext().authentication?.principal as? SecurityUser)?.id
     }
 
     fun getHeader(name: String, defaultValue: String): String {
