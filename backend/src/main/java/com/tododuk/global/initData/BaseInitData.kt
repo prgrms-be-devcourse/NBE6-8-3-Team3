@@ -135,8 +135,9 @@ class BaseInitData(
             val todo1 = Todo(
                 "자바 공부하기",
                 "백엔드 부트캠프 주차별 과제 수행",
+                3,
                 false,
-                3, // High
+                1, // High
                 LocalDateTime.of(2025, 7, 28, 9, 0),
                 LocalDateTime.of(2025, 8, 1, 18, 0),
                 todoList1
@@ -145,6 +146,7 @@ class BaseInitData(
             val todo2 = Todo(
                 "운동하기",
                 "헬스장 가서 1시간 운동",
+                1,
                 false,
                 2, // Medium
                 LocalDateTime.of(2025, 7, 29, 7, 0),
@@ -164,13 +166,7 @@ class BaseInitData(
             todoLabelRepository.save<TodoLabel?>(todoLabel1)
             todoLabelRepository.save<TodoLabel?>(todoLabel2)
             todoLabelRepository.save<TodoLabel?>(todoLabel3)
-
-
             todoListRepository.save<TodoList?>(todoList1)
-
-            // 할일을 할일 목록에 연결
-            todo1.todoList = todoList1
-            todo2.todoList = todoList1
             todoRepository.save(todo1)
             todoRepository.save(todo2)
 
@@ -185,25 +181,8 @@ class BaseInitData(
             todoListRepository.save<TodoList?>(teamTodoList1)
 
             // 팀 할일 생성 (기존 Todo 사용)
-            val teamTodo1 = Todo(
-                "프론트엔드 컴포넌트 개발",
-                "React 컴포넌트 라이브러리 구축",
-                false,  // isCompleted
-                3,      // priority
-                LocalDateTime.now(),
-                LocalDateTime.of(2025, 8, 25, 18, 0),
-                teamTodoList1
-            )
-
-            val teamTodo2 = Todo(
-                "UI/UX 디자인 검토",                          // title
-                "새로운 디자인 시스템 검토 및 피드백",          // description
-                false,                                       // isCompleted
-                2,                                           // priority
-                LocalDateTime.now(),                          // startDate
-                LocalDateTime.of(2025, 8, 22, 18, 0),        // dueDate
-                teamTodoList1                                 // todoList
-            )
+            val teamTodo1 = todo1
+            val teamTodo2 = todo2
 
             todoRepository.save<Todo?>(teamTodo1)
             todoRepository.save<Todo?>(teamTodo2)

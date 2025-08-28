@@ -18,13 +18,13 @@ import java.util.stream.Collectors
 @RequestMapping("/api/todos")
 @Tag(name = "Todolabel")
 @CrossOrigin(origins = ["http://localhost:3000"])
-class TodoLabelController {
-    private val todoLabelService: TodoLabelService? = null
+class TodoLabelController(private val todoLabelService: TodoLabelService) {
+
 
     @GetMapping("/{todoId}/labels")
     fun getTodoLabels(@PathVariable todoId: Int): RsData<TodoLabelResponseDto?> {
         // 🔥 수정: LabelDto 객체들을 반환하도록 변경
-        val labels = todoLabelService!!.getTodoLabelsByTodoId(todoId)
+        val labels = todoLabelService.getTodoLabelsByTodoId(todoId)
 
         val responseDto = TodoLabelResponseDto(todoId, labels)
 
@@ -33,7 +33,7 @@ class TodoLabelController {
 
     @PostMapping("/{todoId}/label")
     fun createTodoLabel(@RequestBody request: CreateTodoLabelRequestDto): RsData<CreateTodoLabelResponseDto?> {
-        val savedTodoLabel = todoLabelService!!.createTodoLabel(request.todoId, request.labelId)
+        val savedTodoLabel = todoLabelService.createTodoLabel(request.todoId, request.labelId)
 
         val responseDto = CreateTodoLabelResponseDto(
             savedTodoLabel.todo!!.getId(),
