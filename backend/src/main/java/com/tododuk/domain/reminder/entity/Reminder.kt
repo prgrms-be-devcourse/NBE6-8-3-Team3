@@ -17,7 +17,7 @@ class Reminder (
 
 
 
-    protected constructor() : this(
+    private constructor() : this(
         todo = null,
         remindAt = LocalDateTime.now(),
         method = ""
