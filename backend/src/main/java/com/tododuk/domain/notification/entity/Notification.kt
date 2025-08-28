@@ -1,36 +1,26 @@
-package com.tododuk.domain.notification.entity;
 
-import com.tododuk.domain.user.entity.User;
-import com.tododuk.global.entity.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import com.tododuk.domain.user.entity.User
+import com.tododuk.global.entity.BaseEntity
+import jakarta.persistence.Entity
+import jakarta.persistence.ManyToOne
 
 @Entity
-@Getter
-@NoArgsConstructor
-public class Notification extends BaseEntity {
+class Notification(
     @ManyToOne
-    private User user;
+    val user: User,
+    val title: String,
+    val description: String,
+    val url: String
+) : BaseEntity() {
 
-    private String title;
-    private String description;
-    private String url;
-    private boolean isRead;
+    final var isRead: Boolean = false
+        private set  // 외부에서 직접 변경 불가
 
-    public void setIsRead(@NonNull boolean read) {
-        this.isRead =true;
-    }
-
-    public Notification(User user, String title, String description, String url) {
-        this.user = user;
-        this.title = title;
-        this.description = description;
-        this.url = url;
-        this.isRead = false; // 기본값은 읽지 않음
-
-    }
+    protected constructor() : this(
+        user = User(),
+        title = "",
+        description = "",
+        url = ""
+    )
 
 }
