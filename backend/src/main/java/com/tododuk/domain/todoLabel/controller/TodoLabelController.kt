@@ -20,7 +20,6 @@ import java.util.stream.Collectors
 @CrossOrigin(origins = ["http://localhost:3000"])
 class TodoLabelController(private val todoLabelService: TodoLabelService) {
 
-
     @GetMapping("/{todoId}/labels")
     fun getTodoLabels(@PathVariable todoId: Int): RsData<TodoLabelResponseDto?> {
         // 🔥 수정: LabelDto 객체들을 반환하도록 변경
