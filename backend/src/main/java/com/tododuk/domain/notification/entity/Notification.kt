@@ -1,3 +1,5 @@
+package com.tododuk.domain.notification.entity
+
 
 import com.tododuk.domain.user.entity.User
 import com.tododuk.global.entity.BaseEntity
@@ -16,6 +18,9 @@ class Notification(
     final var isRead: Boolean = false
         private set  // 외부에서 직접 변경 불가
 
+  fun markAsRead() {
+        this.isRead = true
+    }
 
 
 }
