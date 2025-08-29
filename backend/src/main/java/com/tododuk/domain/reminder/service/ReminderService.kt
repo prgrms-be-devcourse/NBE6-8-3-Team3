@@ -1,91 +1,113 @@
-package com.tododuk.domain.reminder.service;
+package com.tododuk.domain.reminder.service
 
-import com.tododuk.domain.reminder.dto.ReminderDto;
-import com.tododuk.domain.reminder.entity.Reminder;
-import com.tododuk.domain.reminder.job.ReminderJob;
-import com.tododuk.domain.reminder.repository.ReminderRepository;
-import com.tododuk.domain.todo.entity.Todo;
-import com.tododuk.domain.todo.service.TodoService;
-import com.tododuk.global.rsData.RsData;
-import lombok.RequiredArgsConstructor;
-import org.quartz.*;
-import org.springframework.stereotype.Service;
+import com.tododuk.domain.reminder.dto.ReminderDto
+import com.tododuk.domain.reminder.entity.Reminder
+import com.tododuk.domain.reminder.job.ReminderJob
+import com.tododuk.domain.reminder.repository.ReminderRepository
+import com.tododuk.domain.todo.service.TodoService
+import com.tododuk.global.rsData.RsData
+import lombok.RequiredArgsConstructor
+import org.quartz.JobBuilder
+import org.quartz.Scheduler
+import org.quartz.SchedulerException
+import org.quartz.TriggerBuilder
+import org.springframework.stereotype.Service
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
+import java.util.stream.Collectors
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
-public class ReminderService {
-    private final ReminderRepository reminderRepository;
-    private final TodoService todoService;
-    private final Scheduler scheduler;
+class ReminderService(
 
-    public Reminder createReminder(int todoId, LocalDateTime remindDateTime, String method) {
-        Todo todo = todoService.getTodoById(todoId);
-        Reminder reminder = new Reminder(todo, remindDateTime, method);
-        reminderRepository.save(reminder);
-        scheduleReminderJob(reminder);
-        return reminder;
+    private val reminderRepository: ReminderRepository,
+    private val todoService: TodoService,
+    private val scheduler: Scheduler
+
+) {
+    fun createReminder(todoId: Int, remindDateTime: LocalDateTime, method: String): Reminder {
+        val todo = todoService!!.getTodoById(todoId)
+        val reminder = Reminder(todo, remindDateTime, method)
+        reminderRepository!!.save<Reminder?>(reminder)
+        scheduleReminderJob(reminder)
+        return reminder
     }
 
-    public RsData<Void> deleteReminder(int id) {
 
-        reminderRepository.deleteById(id);
-        return new RsData<>("200-1", "Reminder deleted successfully");
+    fun findById(id: Int): Reminder? {
+        return reminderRepository!!.findById(id).orElse(null)
     }
 
-    public RsData<List<ReminderDto>> getReminder() {
-
-        return new RsData<>(
-                "200-1",
-                "Reminders retrieved successfully",
-                reminderRepository.findAll()
-                        .stream()
-                        .map(ReminderDto::new)
-                        .collect(Collectors.toList())
-        );
+    fun deleteReminder(id: Int): RsData<Void?> {
+        reminderRepository!!.deleteById(id)
+        return RsData<Void?>("200-1", "Reminder deleted successfully")
     }
 
-    public RsData<ReminderDto> getReminderById(int id) {
-
-        return reminderRepository.findById(id)
-                .map(reminder -> new RsData<>("200-1", "Reminder found", new ReminderDto(reminder)))
-                .orElse(new RsData<>("400-1", "Reminder not found"));
+    fun getReminder(): RsData<MutableList<ReminderDto?>?>
+    {
+        val reminders = reminderRepository.findAll()
+        val reminderDto: MutableList<ReminderDto?> = reminders.stream()
+            .map { reminder: Reminder -> ReminderDto(reminder) }
+            .collect(Collectors.toList())
+        return RsData<MutableList<ReminderDto?>?>("200-1", "Reminders retrieved successfully", reminderDto)
     }
 
-    public RsData<ReminderDto> updateReminder(int id, LocalDateTime remindDateTime, String method) {
+    fun getReminderById(id: Int): RsData<ReminderDto?> {
+        val reminders = reminderRepository.findById(id)
+       val reminderDto: ReminderDto? = if (reminders.isPresent) {
+            ReminderDto(reminders.get())
+        } else {
+            null
+        }
 
-        return reminderRepository.findById(id)
-                .map(reminder -> {
-                    reminder.setRemindAt(remindDateTime);
-                    reminder.setMethod(method);
-                    reminderRepository.save(reminder);
-                    return new RsData<>("200-1", "Reminder updated successfully", new ReminderDto(reminder));
-                })
-                .orElse(new RsData<>("400-1", "Reminder not found", null));
-    }
-
-    public void scheduleReminderJob(Reminder reminder) {
-
-        try {
-            JobDetail jobDetail = JobBuilder.newJob(ReminderJob.class)
-                    .withIdentity("reminderJob-" + reminder.getId())
-                    .usingJobData("reminderId", reminder.getId())
-                    .build();
-            System.out.println("스케줄러 작동");
-
-            Trigger trigger = TriggerBuilder.newTrigger()
-                    .startAt(Date.from(reminder.getRemindAt().atZone(ZoneId.systemDefault()).toInstant()))
-                    .build();
-
-            scheduler.scheduleJob(jobDetail, trigger);
-        } catch (SchedulerException e) {
-            throw new RuntimeException("Failed to schedule job", e);
+        return if (reminderDto != null) {
+            RsData<ReminderDto?>("200-1", "Reminder retrieved successfully", reminderDto)
+        } else {
+            RsData<ReminderDto?>("400-1", "Reminder not found", null)
         }
     }
 
+
+
+    fun updateReminder(id: Int, remindDateTime: LocalDateTime?, method: String?): RsData<ReminderDto?> {
+        val existingReminder = reminderRepository!!.findById(id)
+        if (existingReminder.isEmpty) {
+            return RsData("400-1", "Reminder not found", null)
+        }
+
+        val reminder = existingReminder.get()
+
+        // Kotlin 스타일로 프로퍼티 직접 수정
+        if (remindDateTime != null) {
+            reminder.remindAt = remindDateTime
+        }
+        if (method != null) {
+            reminder.method = method
+        }
+
+        reminderRepository.save(reminder)
+
+        return RsData("200-1", "Reminder updated successfully", ReminderDto(reminder))
+    }
+
+    fun scheduleReminderJob(reminder: Reminder) {
+        try {
+            val jobDetail = JobBuilder.newJob(ReminderJob::class.java)
+                .withIdentity("reminderJob-${reminder.id}")
+                .usingJobData("reminderId", reminder.id)
+                .build()
+
+            println("스케줄러 작동")
+
+            val trigger = TriggerBuilder.newTrigger()
+                .startAt(Date.from(reminder.remindAt.atZone(ZoneId.systemDefault()).toInstant()))
+                .build()
+
+            scheduler!!.scheduleJob(jobDetail, trigger)
+        } catch (e: SchedulerException) {
+            throw RuntimeException("Failed to schedule job", e)
+        }
+    }
 
 }

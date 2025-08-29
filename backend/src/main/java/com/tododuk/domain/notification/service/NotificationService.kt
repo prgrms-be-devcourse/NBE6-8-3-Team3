@@ -1,70 +1,85 @@
-package com.tododuk.domain.notification.service;
+package com.tododuk.domain.notification.service
 
-import com.tododuk.domain.notification.dto.NotificationDto;
-import com.tododuk.domain.notification.entity.Notification;
-import com.tododuk.domain.notification.repository.NotificationRepository;
-import com.tododuk.domain.reminder.dto.ReminderDto;
-import com.tododuk.domain.reminder.service.ReminderService;
-import com.tododuk.domain.user.entity.User;
-import com.tododuk.domain.user.service.UserService;
-import com.tododuk.global.rsData.RsData;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
+import com.tododuk.domain.notification.dto.NotificationDto
+import com.tododuk.domain.notification.entity.Notification
+import com.tododuk.domain.notification.repository.NotificationRepository
+import com.tododuk.domain.reminder.service.ReminderService
+import com.tododuk.domain.user.entity.User
+import com.tododuk.domain.user.service.UserService
+import org.springframework.stereotype.Service
 
 @Service
-@RequiredArgsConstructor
-public class NotificationService {
+class NotificationService(
+    val notificationRepository: NotificationRepository,
+    val reminderService: ReminderService,
+    val userService: UserService
+) {
 
-
-    private final NotificationRepository notificationRepository;
-    private final ReminderService reminderService;
-    private final UserService userService;
-
-    public NotificationDto CreateNotification(User user, String title, String description, String url) {
-        Notification notification = new Notification(user, title, description, url);
-        notificationRepository.save(notification);
-        return new NotificationDto(notification.getId(), user, title, description, url, false);
+    fun createNotification(user: User, title: String, description: String, url: String): NotificationDto {
+        val notification = Notification(user, title, description, url)
+        val savedNotification = notificationRepository.save(notification)
+        return NotificationDto(savedNotification)
     }
 
-    public Notification findById(int id) {
+    fun findById(id: Int): NotificationDto? {
+        val notification = notificationRepository.findById(id)
+        return if (notification.isPresent) {
+            NotificationDto(notification.get())
+        } else {
+            null
+        }
+    }
 
+
+    fun findByIdImproved(id: Int): NotificationDto? {
         return notificationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Notification not found with id: " + id));
+            .map { NotificationDto(it) }
+            .orElse(null)
     }
 
-    public void deleteNotification(Notification noti) {
-
-        notificationRepository.delete(noti);
+    fun deleteNotification(notificationId: Int) {
+        val notification = notificationRepository.findById(notificationId)
+            .orElseThrow { IllegalArgumentException("Notification not found with id: $notificationId") }
+        notificationRepository.delete(notification)
     }
 
-    public List<Notification> getNotifications() {
-
-        return notificationRepository.findAll();
-    }
-
-    public NotificationDto CreateNotificationByReminder(int reminderId) {
-        RsData<ReminderDto> reminder = reminderService.getReminderById(reminderId);
-        User user = userService.findByUserEmail("awdawdawd@gamil.com").orElseThrow(() -> new IllegalArgumentException("User not found with email"));
-        String title = reminder.data().todo().getTitle();
-        String description = "Reminder for: " + reminder.data().todo().getDescription();
-        String url = "api/v1//todo/" + reminder.data().todo().getId();
-        return CreateNotification(user, title, description, url);
+    // Entity 대신 DTO 반환 (더 나은 방법)
+    fun getAllNotifications(): List<NotificationDto> {
+        return notificationRepository.findAll()
+            .map { NotificationDto(it) }
     }
 
 
-    public Notification updateNotificationStatus(Optional<Notification> notificationDto) {
-        Notification notification = findById(notificationDto.get().getId());
-        notification.setIsRead(notificationDto.get().isRead());
-        notificationRepository.save(notification);
-        return notification;
+    fun createNotificationByReminder(reminderId: Int): NotificationDto {
+        val reminder = reminderService.findById(reminderId)
+            ?: throw IllegalArgumentException("Reminder not found with id $reminderId")
 
+        val userId = 1 // TODO: reminder와 연동된 userId 사용
+        val user: User = userService.findById(userId)
+            .orElseThrow { IllegalArgumentException("User not found with id $userId") }!!
+
+        val title = "Reminder: ${reminder.method ?: "No Title"}"
+        val description = "Your reminder is scheduled for ${reminder.remindAt}."
+        val url = "/reminders/${reminder.id}"
+
+        return createNotification(user, title, description, url)
     }
 
-    public List<Notification> getNotificationsByUserId(int id) {
-        return notificationRepository.findByUserId(id);
+    fun updateNotificationStatus(notificationId : Int): NotificationDto {
+        val existingNotification = notificationRepository.findById(notificationId)
+            .orElseThrow { IllegalArgumentException("Notification not found with id: ${notificationId}") }
+
+        if (existingNotification.isRead) {
+            existingNotification.markAsRead()
+        }
+
+        val updatedNotification = notificationRepository.save(existingNotification)
+        return NotificationDto(updatedNotification) // DTO로 반환
+    }
+
+    fun getNotificationsByUserId(userId: Int): List<NotificationDto> {
+        return notificationRepository.findByUserId(userId)
+            .map { NotificationDto(it) }
     }
 
 }

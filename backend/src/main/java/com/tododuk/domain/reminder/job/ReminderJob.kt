@@ -1,32 +1,30 @@
-package com.tododuk.domain.reminder.job;
+package com.tododuk.domain.reminder.job
 
-import com.tododuk.domain.notification.service.NotificationService;
-import org.quartz.Job;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.tododuk.domain.notification.service.NotificationService
+import org.quartz.Job
+import org.quartz.JobExecutionContext
+import org.quartz.JobExecutionException
+import org.springframework.stereotype.Component
 
 @Component
-public class ReminderJob implements Job {
+class ReminderJob(
+    val notificationService: NotificationService
+) : Job {
 
-    @Autowired
-    private NotificationService notificationService;
 
-    @Override
-    public void execute(JobExecutionContext context) throws JobExecutionException {
+    @Throws(JobExecutionException::class)
+    override fun execute(context: JobExecutionContext) {
         try {
-            int reminderId = context.getMergedJobDataMap().getInt("reminderId");
-            System.out.println("ReminderJob executed for reminderId: " + reminderId);
+            val reminderId = context.getMergedJobDataMap().getInt("reminderId")
+            println("ReminderJob executed for reminderId: " + reminderId)
 
-            notificationService.CreateNotificationByReminder(reminderId);
-
-        } catch (Exception e) {
-            System.err.println("ReminderJob 실행 중 예외 발생:");
-            e.printStackTrace();  // 콘솔에 자세한 에러 출력
+            notificationService.createNotificationByReminder(reminderId)
+        } catch (e: Exception) {
+            System.err.println("ReminderJob 실행 중 예외 발생:")
+            e.printStackTrace() // 콘솔에 자세한 에러 출력
 
             // Quartz에게 실패 알리기
-            throw new JobExecutionException(e);
+            throw JobExecutionException(e)
         }
     }
 }
