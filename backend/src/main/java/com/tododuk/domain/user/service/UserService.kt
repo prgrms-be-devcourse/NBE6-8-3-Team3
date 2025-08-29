@@ -1,6 +1,7 @@
 package com.tododuk.domain.user.service
 
 import com.tododuk.domain.user.dto.UserDto
+import com.tododuk.domain.user.dto.UserUpdateRequest
 import com.tododuk.domain.user.entity.User
 import com.tododuk.domain.user.repository.UserRepository
 import com.tododuk.global.exception.ServiceException
@@ -54,7 +55,7 @@ class UserService(
         return userRepository.save(user)
     }
 
-    fun updateUserInfo(user: User, reqBody: UserDto) {
+    fun updateUserInfo(user: User, reqBody: UserUpdateRequest) {
         user.updateUserInfo(
             reqBody.nickname, // UserDto의 nickname 속성 사용
             reqBody.profileImageUrl // UserDto의 profileImageUrl 속성 사용

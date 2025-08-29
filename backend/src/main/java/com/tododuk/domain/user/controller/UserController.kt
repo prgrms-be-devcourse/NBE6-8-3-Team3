@@ -1,6 +1,7 @@
 package com.tododuk.domain.user.controller
 
 import com.tododuk.domain.user.dto.UserDto
+import com.tododuk.domain.user.dto.UserUpdateRequest
 import com.tododuk.domain.user.service.FileUploadService
 import com.tododuk.domain.user.service.UserService
 import com.tododuk.global.exception.ServiceException
@@ -125,8 +126,8 @@ class UserController(
 
     @PostMapping("/me")
     fun updateMyInfo(
-        @RequestBody reqBody: @Valid UserDto
-    ): RsData<UserDto?> {
+        @RequestBody reqBody: @Valid UserUpdateRequest
+    ): RsData<UserUpdateRequest?> {
         // 인증된 사용자 확인
         val actor = rq.getActor()
             ?: throw ServiceException("401-1", "인증된 사용자가 아닙니다.")
@@ -142,13 +143,13 @@ class UserController(
         return RsData(
             "200-1",
             "내 정보 수정 성공",
-            UserDto(user)
+            UserUpdateRequest(user)
         )
     }
 
     @PostMapping("/profile-image")
     fun uploadProfileImage(
-        @RequestParam("profileImage") file: MultipartFile?
+        @RequestParam("profileImage") file: MultipartFile
     ): RsData<MutableMap<String?, String?>?> {
         // 현재 로그인한 사용자 정보 가져오기
         val actor = rq.getActor() ?: throw ServiceException("401-1", "로그인이 필요합니다.")
@@ -169,13 +170,9 @@ class UserController(
         val imageUrl = fileUploadService.uploadProfileImage(file, user.id.toLong())
 
         // 사용자 정보 업데이트 - 기존 UserService의 updateUserInfo 메서드 활용
-        val updateDto = UserDto(
-            user.id,           // id
+        val updateDto = UserUpdateRequest(
             user.nickName,     // nickname
-            user.userEmail,    // email
             imageUrl,          // profileImageUrl (새로운 이미지 URL)
-            user.createDate,   // createDate
-            user.modifyDate    // modifyDate
         )
 
         userService.updateUserInfo(user, updateDto)
