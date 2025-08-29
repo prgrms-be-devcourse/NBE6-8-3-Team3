@@ -5,7 +5,6 @@ import com.tododuk.standard.util.Ut
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.Map
-import kotlin.text.get
 
 @Service
 class AuthTokenService {
