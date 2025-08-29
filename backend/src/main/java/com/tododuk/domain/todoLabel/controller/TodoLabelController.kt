@@ -23,6 +23,7 @@ class TodoLabelController(private val todoLabelService: TodoLabelService) {
     @GetMapping("/{todoId}/labels")
     fun getTodoLabels(@PathVariable todoId: Int): RsData<TodoLabelResponseDto?> {
         // 🔥 수정: LabelDto 객체들을 반환하도록 변경
+
         val labels = todoLabelService.getTodoLabelsByTodoId(todoId)
 
         val responseDto = TodoLabelResponseDto(todoId, labels)
