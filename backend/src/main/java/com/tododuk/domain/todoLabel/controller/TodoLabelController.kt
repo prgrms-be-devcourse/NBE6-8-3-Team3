@@ -35,8 +35,8 @@ class TodoLabelController(private val todoLabelService: TodoLabelService) {
         val savedTodoLabel = todoLabelService.createTodoLabel(request.todoId, request.labelId)
 
         val responseDto = CreateTodoLabelResponseDto(
-            savedTodoLabel.todo!!.getId(),
-            savedTodoLabel.label!!.getId()
+            savedTodoLabel.todo!!.id,
+            savedTodoLabel.label!!.id
         )
 
         return RsData<CreateTodoLabelResponseDto?>("200-1", "Todo에 라벨을 성공적으로 연결했습니다.", responseDto)
@@ -50,7 +50,7 @@ class TodoLabelController(private val todoLabelService: TodoLabelService) {
         val labels = savedTodoLabels.stream()
             .map<LabelDto?> { todoLabel: TodoLabel? ->
                 LabelDto(
-                    todoLabel!!.label!!.getId(),
+                    todoLabel!!.label!!.id,
                     todoLabel.label!!.name,
                     todoLabel.label!!.color
                 )
@@ -70,7 +70,7 @@ class TodoLabelController(private val todoLabelService: TodoLabelService) {
         val labels = savedTodoLabels.stream()
             .map<LabelDto?> { todoLabel: TodoLabel? ->
                 LabelDto(
-                    todoLabel!!.label!!.getId(),
+                    todoLabel!!.label!!.id,
                     todoLabel.label!!.name,
                     todoLabel.label!!.color
                 )

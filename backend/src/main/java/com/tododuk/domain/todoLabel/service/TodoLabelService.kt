@@ -22,7 +22,7 @@ class TodoLabelService(
     @Transactional(readOnly = true)
     fun getTodoLabelIdsByTodoIds(todoId: Int): MutableList<Int?> {
         return todoLabelRepository!!.findByTodoId(todoId).stream()
-            .map<Int?> { todoLabel: TodoLabel? -> todoLabel!!.label!!.getId() }
+            .map<Int?> { todoLabel: TodoLabel? -> todoLabel!!.label!!.id }
             .collect(Collectors.toList())
     }
 
@@ -32,7 +32,7 @@ class TodoLabelService(
         return todoLabelRepository!!.findByTodoId(todoId).stream()
             .map<LabelDto?> { todoLabel: TodoLabel? ->
                 LabelDto(
-                    todoLabel!!.label!!.getId(),
+                    todoLabel!!.label!!.id,
                     todoLabel.label!!.name,
                     todoLabel.label!!.color
                 )
