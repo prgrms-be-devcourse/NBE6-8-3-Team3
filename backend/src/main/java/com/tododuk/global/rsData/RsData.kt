@@ -1,27 +1,33 @@
-package com.tododuk.global.rsData;
+package com.tododuk.global.rsData
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.lang.NonNull;
+import com.fasterxml.jackson.annotation.JsonIgnore
 
-public record RsData<T>(
-        @NonNull String resultCode,
-        @JsonIgnore int statusCode,
-        @NonNull String msg,
-        @NonNull T data
+data class RsData<T>(
+    val resultCode: String,
+    @field:JsonIgnore val statusCode: Int,
+    val msg: String,
+    val data: T?
 ) {
-    public RsData(String resultCode, String msg) {
-        this(resultCode, msg, null);
-    }
+    constructor(resultCode: String, msg: String) : this(
+        resultCode = resultCode,
+        statusCode = resultCode.substringBefore("-").toIntOrNull() ?: 0,
+        msg = msg,
+        data = null
+    )
 
-    public RsData(String resultCode, String msg, T data) {
-        this(resultCode, Integer.parseInt(resultCode.split("-", 2)[0]), msg, data);
-    }
+    constructor(resultCode: String, msg: String, data: T?) : this(
+        resultCode = resultCode,
+        statusCode = resultCode.substringBefore("-").toIntOrNull() ?: 0,
+        msg = msg,
+        data = data
+    )
 
-    public static <T> RsData<T> success(String msg) {
-        return new RsData<>("200-OK", msg);
-    }
-
-    public static <T> RsData<T> success(String msg, T data) {
-        return new RsData<>("200-OK", msg, data);
+    companion object {
+        @JvmStatic
+        fun <T> success(msg: String): RsData<T> =
+            RsData("200-OK", msg)
+        @JvmStatic
+        fun <T> success(msg: String, data: T): RsData<T> =
+            RsData("200-OK", msg, data)
     }
 }
