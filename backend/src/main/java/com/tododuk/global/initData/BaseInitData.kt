@@ -158,7 +158,6 @@ class BaseInitData(
             val todoLabel2 = TodoLabel(todo1, label2)
             val todoLabel3 = TodoLabel(todo2, label1)
 
-
             todoListRepository.save<TodoList?>(todoList1)
             todoRepository.save<Todo?>(todo1)
             todoRepository.save<Todo?>(todo2)
