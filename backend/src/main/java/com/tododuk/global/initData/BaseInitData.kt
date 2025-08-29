@@ -118,11 +118,6 @@ class BaseInitData(
             teamMemberRepository.save<TeamMember?>(member3)
             teamMemberRepository.save<TeamMember?>(member4)
 
-            //label 생성
-            val label1 = labelService.createLabelIfNotExists("공부", "#FF4D4F") // 빨강
-            val label2 = labelService.createLabelIfNotExists("운동", "#1890FF") // 파랑
-            val label3 = labelService.createLabelIfNotExists("휴식", "#52C41A") // 초록
-
             // 할일 목록 생성
             val todoList1 = TodoList(
                 "기본 할일 목록",
@@ -154,10 +149,17 @@ class BaseInitData(
                 todoList1
             )
 
+            //label 생성
+            val label1 = labelService.createLabelIfNotExists("공부", "#FF4D4F") // 빨강
+            val label2 = labelService.createLabelIfNotExists("운동", "#1890FF") // 파랑
+            val label3 = labelService.createLabelIfNotExists("휴식", "#52C41A") // 초록
+
             val todoLabel1 = TodoLabel(todo1, label1)
             val todoLabel2 = TodoLabel(todo1, label2)
             val todoLabel3 = TodoLabel(todo2, label1)
 
+
+            todoListRepository.save<TodoList?>(todoList1)
             todoRepository.save<Todo?>(todo1)
             todoRepository.save<Todo?>(todo2)
             labelService.createLabel(label1)
@@ -166,9 +168,8 @@ class BaseInitData(
             todoLabelRepository.save<TodoLabel?>(todoLabel1)
             todoLabelRepository.save<TodoLabel?>(todoLabel2)
             todoLabelRepository.save<TodoLabel?>(todoLabel3)
-            todoListRepository.save<TodoList?>(todoList1)
-            todoRepository.save(todo1)
-            todoRepository.save(todo2)
+//            todoRepository.save(todo1)
+//            todoRepository.save(todo2)
 
             // 팀 할일 목록 생성 (기존 TodoList 사용)
             val teamTodoList1 = TodoList(
