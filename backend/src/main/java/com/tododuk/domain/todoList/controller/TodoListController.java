@@ -109,7 +109,7 @@ public class TodoListController {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         try {
-            List<TodoListResponseDto> todoLists = todoListService.getUserTodoList(user.id);
+            List<TodoListResponseDto> todoLists = todoListService.getUserTodoList(user.getId());
             return ResponseEntity.ok(RsData.success("유저의 todo list 조회 성공", todoLists));
         } catch (Exception e) {
             throw new ServiceException("400-1", "list가 존재하지 않습니다.");

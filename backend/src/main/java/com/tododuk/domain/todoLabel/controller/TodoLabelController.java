@@ -39,8 +39,8 @@ public class TodoLabelController {
         TodoLabel savedTodoLabel = todoLabelService.createTodoLabel(request.todoId(), request.labelId());
 
         CreateTodoLabelResponseDto responseDto = new CreateTodoLabelResponseDto(
-                savedTodoLabel.getTodo().id,
-                savedTodoLabel.getLabel().id
+                savedTodoLabel.getTodo().getId(),
+                savedTodoLabel.getLabel().getId()
         );
 
         return new RsData<>("200-1", "Todo에 라벨을 성공적으로 연결했습니다.", responseDto);
@@ -53,7 +53,7 @@ public class TodoLabelController {
         // 🔥 수정: LabelDto 객체들을 반환하도록 변경
         List<LabelDto> labels = savedTodoLabels.stream()
                 .map(todoLabel -> new LabelDto(
-                        todoLabel.getLabel().id,
+                        todoLabel.getLabel().getId(),
                         todoLabel.getLabel().getName(),
                         todoLabel.getLabel().getColor()
                 ))
@@ -71,7 +71,7 @@ public class TodoLabelController {
         // 🔥 수정: LabelDto 객체들을 반환하도록 변경
         List<LabelDto> labels = savedTodoLabels.stream()
                 .map(todoLabel -> new LabelDto(
-                        todoLabel.getLabel().id,
+                        todoLabel.getLabel().getId(),
                         todoLabel.getLabel().getName(),
                         todoLabel.getLabel().getColor()
                 ))

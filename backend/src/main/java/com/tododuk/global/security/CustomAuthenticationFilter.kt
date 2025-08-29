@@ -5,7 +5,6 @@ import com.tododuk.domain.user.entity.User
 import com.tododuk.domain.user.service.UserService
 import com.tododuk.global.exception.ServiceException
 import com.tododuk.global.rq.Rq
-import com.tododuk.global.rsData.RsData
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServletRequest
@@ -23,7 +22,6 @@ import java.io.IOException
 import java.util.logging.Logger
 
 @Component
-//스프링 시큐리티
 class CustomAuthenticationFilter(
     private val rq: Rq,
     private val userService: UserService,
@@ -32,7 +30,6 @@ class CustomAuthenticationFilter(
 
     private val logger = Logger.getLogger(CustomAuthenticationFilter::class.java.name)
 
-    // 커스텀 인증 필터 (액션 메서드 실행 전 작동)
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -128,18 +125,23 @@ class CustomAuthenticationFilter(
                 val userIdNum = payload["id"] as Number
                 val userId = userIdNum.toInt()
 
-                // 임시 User 객체 생성하지 않고 실제 DB에서 조회
-                user = userService.findById(userId)
-                    ?: throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
-
+                // Optional을 사용하여 사용자 조회
+                val userOptional = userService.findById(userId)
+                if (!userOptional.isPresent) {
+                    throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
+                }
+                user = userOptional.get()
                 isAccessTokenValid = true
             }
         }
 
         // accessToken이 없거나 유효하지 않은 경우 apiKey로 조회
         if (user == null) {
-            user = userService.findByApiKey(apiKey)
-                ?: throw ServiceException("404-2", "존재하지 않는 Api키입니다.")
+            val userOptional = userService.findByApiKey(apiKey)
+            if (!userOptional.isPresent) {
+                throw ServiceException("404-2", "존재하지 않는 Api키입니다.")
+            }
+            user = userOptional.get()
         }
 
         // accessToken이 존재했지만 유효하지 않은 경우 새로운 토큰 생성

@@ -72,8 +72,8 @@ public class ReminderService {
 
         try {
             JobDetail jobDetail = JobBuilder.newJob(ReminderJob.class)
-                    .withIdentity("reminderJob-" + reminder.id)
-                    .usingJobData("reminderId", reminder.id)
+                    .withIdentity("reminderJob-" + reminder.getId())
+                    .usingJobData("reminderId", reminder.getId())
                     .build();
             System.out.println("스케줄러 작동");
 

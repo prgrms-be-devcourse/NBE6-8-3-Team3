@@ -25,7 +25,7 @@ public record NotificationDto(
     public NotificationDto(Notification notification) {
 
         this(
-                notification.id,
+                notification.getId(),
                 notification.getUser(),
                 notification.getTitle(),
                 notification.getDescription(),

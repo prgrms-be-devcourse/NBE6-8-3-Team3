@@ -3,7 +3,6 @@ package com.tododuk.domain.user.controller;
 import com.tododuk.domain.user.entity.User;
 import com.tododuk.domain.user.service.UserService;
 import jakarta.servlet.http.Cookie;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +55,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("200-1"))
                 .andExpect(jsonPath("$.msg").value("%s님 환영합니다. 회원가입이 완료되었습니다.".formatted(user.getNickName())))
                 .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.id").value(user.id))
+                .andExpect(jsonPath("$.data.id").value(user.getId()))
                 .andExpect(jsonPath("$.data.email").value(user.getUserEmail()));
     }
 
@@ -122,7 +121,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("200-1"))
                 .andExpect(jsonPath("$.msg").value("내 정보 조회 성공"))
                 .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.id").value(user.id))
+                .andExpect(jsonPath("$.data.id").value(user.getId()))
                 .andExpect(jsonPath("$.data.email").value(user.getUserEmail()))
                 .andExpect(jsonPath("$.data.nickname").value(user.getNickName()));
     }
