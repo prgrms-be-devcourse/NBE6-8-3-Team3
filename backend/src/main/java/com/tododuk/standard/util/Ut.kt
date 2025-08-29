@@ -1,66 +1,60 @@
-package com.tododuk.standard.util;
+package com.tododuk.standard.util
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ClaimsBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
+import java.security.Key
+import java.util.*
 
-import javax.crypto.SecretKey;
-import java.security.Key;
-import java.util.Date;
-import java.util.Map;
+class Ut {
+    object jwt {
+        fun toString(secret: String?, expireSeconds: Int, body: MutableMap<String?, Any?>): String {
+            require(secret != null) { "JWT secret cannot be null" }
 
-public class Ut {
-    public static class jwt {
-        public static String toString(String secret, int expireSeconds, Map<String, Object> body) {
-            ClaimsBuilder claimsBuilder = Jwts.claims();
-
-            for (Map.Entry<String, Object> entry : body.entrySet()) {
-                claimsBuilder.add(entry.getKey(), entry.getValue());
+            val claimsBuilder = Jwts.claims()
+            for (entry in body.entries) {
+                claimsBuilder.add(entry.key, entry.value)
             }
 
-            Claims claims = claimsBuilder.build();
+            val claims = claimsBuilder.build()
+            val issuedAt = Date()
+            val expiration = Date(issuedAt.time + 1000L * expireSeconds)
+            val secretKey: Key = Keys.hmacShaKeyFor(secret.toByteArray())
 
-            Date issuedAt = new Date();
-            Date expiration = new Date(issuedAt.getTime() + 1000L * expireSeconds);
-
-            Key secretKey = Keys.hmacShaKeyFor(secret.getBytes());
-
-            String jwt = Jwts.builder()
-                    .claims(claims)
-                    .issuedAt(issuedAt)
-                    .expiration(expiration)
-                    .signWith(secretKey)
-                    .compact();
-
-            return jwt;
+            return Jwts.builder()
+                .claims(claims)
+                .issuedAt(issuedAt)
+                .expiration(expiration)
+                .signWith(secretKey)
+                .compact()
         }
-        // jwt 유효성 검사
-        public static boolean isValid(String secret, String jwt) {
-            SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes());
 
+        fun isValid(secret: String?, jwt: String?): Boolean {
+            if (secret == null || jwt == null) return false
+
+            val secretKey = Keys.hmacShaKeyFor(secret.toByteArray())
             try {
                 Jwts.parser()
-                        .verifyWith(secretKey)
-                        .build()
-                        .parse(jwt);
-            } catch (Exception e) {
-                return false;
+                    .verifyWith(secretKey)
+                    .build()
+                    .parse(jwt)
+                return true
+            } catch (e: Exception) {
+                return false
             }
-            return true;
         }
 
-        // jwt에서 payload(실제 데이터) 추출
-        public static Map<String, Object> payload(String secret, String jwt) {
-            SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes());
-            try{
-                return (Map<String, Object>) Jwts.parser()
-                        .verifyWith(secretKey)
-                        .build()
-                        .parse(jwt)
-                        .getPayload();
-            } catch (Exception e){
-                return null;
+        fun payload(secret: String?, jwt: String?): MutableMap<String?, Any?>? {
+            if (secret == null || jwt == null) return null
+
+            val secretKey = Keys.hmacShaKeyFor(secret.toByteArray())
+            try {
+                return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parse(jwt)
+                    .payload as MutableMap<String?, Any?>?
+            } catch (e: Exception) {
+                return null
             }
         }
     }

@@ -50,7 +50,7 @@ class CustomAuthenticationFilter(
         } catch (e: ServiceException) {
             val rsData = e.rsData
             response.contentType = "application/json"
-            response.status = rsData.statusCode()
+            response.status = rsData.statusCode
 
             response.writer.write(
                 objectMapper.writeValueAsString(rsData)
