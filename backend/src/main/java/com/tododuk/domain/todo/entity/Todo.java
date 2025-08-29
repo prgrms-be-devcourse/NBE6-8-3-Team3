@@ -50,6 +50,16 @@ public class Todo extends BaseEntity {
         this.startDate = startDate;
         this.dueDate = dueDate;
     }
+    //baseInitData를 위해 생성자 추가
+    public Todo(String title, String description, int priority, boolean isCompleted, int todoListId, LocalDateTime startDate, LocalDateTime dueDate, TodoList todoList){
+        this.title = title;
+        this.description = description;
+        this.isCompleted = isCompleted;
+        this.priority = priority;
+        this.startDate = startDate;
+        this.dueDate = dueDate;
+        this.todoList = todoList;
+    }
 
     public void update(TodoReqDto dto){
         this.title = dto.getTitle();
