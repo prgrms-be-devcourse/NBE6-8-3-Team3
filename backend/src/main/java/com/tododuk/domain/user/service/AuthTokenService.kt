@@ -35,8 +35,7 @@ class AuthTokenService {
 
         return mapOf(
             "id" to parsedPayload["id"] as Int,
-            "username" to parsedPayload["username"] as String,
-            "name" to parsedPayload["name"] as String
+            "email" to parsedPayload["email"] as String
         )
     }
 }
