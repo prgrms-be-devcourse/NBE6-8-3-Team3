@@ -9,7 +9,7 @@ import java.util.stream.Collectors
 
 @NoArgsConstructor
 @AllArgsConstructor
-class TodoListResponseDto constructor(
+class TodoListResponseDto private constructor(
     val id : Int = 0,
     val name: String? = null,
     val description: String? = null,

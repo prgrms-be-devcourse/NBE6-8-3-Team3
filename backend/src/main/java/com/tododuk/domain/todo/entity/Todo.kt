@@ -6,40 +6,35 @@ import com.tododuk.global.entity.BaseEntity
 import jakarta.persistence.Entity
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
-import lombok.AllArgsConstructor
 import lombok.Builder
-import lombok.NoArgsConstructor
 import java.time.LocalDateTime
 
 @Entity
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-open class Todo : BaseEntity {
-    //업데이트 날짜는 제외 (erd 수정 필요)
-    //Getter
-    var title: String?
-    var description: String?
-    var isCompleted: Boolean
-    var priority: Int // 1: Low, 2: Medium, 3: High
+open class Todo(
+    var title: String? = null,
+    var description: String? = null,
+    var isCompleted: Boolean = false,
+    var priority: Int = 2, // 1: Low, 2: Medium, 3: High
+    var startDate: LocalDateTime = LocalDateTime.now(),
+    var dueDate: LocalDateTime? = null,
 
-    var startDate: LocalDateTime
-    var dueDate: LocalDateTime?
-
-    //initData test를 위해 일시적으로 주석처리
     @ManyToOne
     @JoinColumn(name = "Todo_List_Id")
     var todoList: TodoList? = null
+) : BaseEntity() {
 
-    constructor(title: String?, description: String?, completed: Boolean) {
-        this.title = title
-        this.description = description
-        this.isCompleted = completed
-        this.priority = 2 // 기본값은 Medium으로 설정
-        this.startDate = LocalDateTime.now() // 생성 시 현재 시간으로 설정
-        this.dueDate = null // 기본값은 null로 설정
-    }
+    // 생성자 오버로딩 1
+    constructor(title: String?, description: String?, completed: Boolean) : this(
+        title = title,
+        description = description,
+        isCompleted = completed,
+        priority = 2,
+        startDate = LocalDateTime.now(),
+        dueDate = null
+    )
 
+    // 생성자 오버로딩 2
     constructor(
         title: String?,
         description: String?,
@@ -48,34 +43,15 @@ open class Todo : BaseEntity {
         todoListId: Int,
         startDate: LocalDateTime,
         dueDate: LocalDateTime?
-    ) {
-        this.title = title
-        this.description = description
-        this.isCompleted = isCompleted
-        this.priority = priority
-        this.startDate = startDate
-        this.dueDate = dueDate
-    }
+    ) : this(
+        title = title,
+        description = description,
+        priority = priority,
+        isCompleted = isCompleted,
+        startDate = startDate,
+        dueDate = dueDate
+    )
 
-    //baseInitData를 위해 생성자 추가
-    constructor(
-        title: String?,
-        description: String?,
-        priority: Int,
-        isCompleted: Boolean,
-        todoListId: Int,
-        startDate: LocalDateTime,
-        dueDate: LocalDateTime?,
-        todoList: TodoList?
-    ) {
-        this.title = title
-        this.description = description
-        this.isCompleted = isCompleted
-        this.priority = priority
-        this.startDate = startDate
-        this.dueDate = dueDate
-        this.todoList = todoList
-    }
 
     fun update(dto: TodoReqDto) {
         this.title = dto.title
@@ -83,6 +59,6 @@ open class Todo : BaseEntity {
         this.priority = dto.priority
         this.isCompleted = dto.isCompleted
         this.dueDate = dto.dueDate
-        //        this.todoList = dto.toEntity().getTodoList();
+        // this.todoList = dto.toEntity().todoList
     }
 }

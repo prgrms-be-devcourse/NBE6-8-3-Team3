@@ -2,14 +2,12 @@ package com.tododuk.domain.todoList.dto
 
 import jakarta.validation.constraints.NotBlank
 import lombok.AllArgsConstructor
-import lombok.Getter
 import lombok.NoArgsConstructor
 import java.time.LocalDateTime
 
-@Getter
 @NoArgsConstructor
 @AllArgsConstructor
-class TodoListReqDto (
+data class TodoListReqDto (
     var name: @NotBlank String? = null,
 
     var description: String? = null,
@@ -20,7 +18,7 @@ class TodoListReqDto (
     var createdAt: LocalDateTime? = null,
     var modifiedAt: LocalDateTime? = null
 ){
-     //    public TodoList toEntity() {
-    //        return new TodoList(name, description, userId, teamId);
-    //    }
+//     fun toEntity(): TodoList {
+//        return TodoList(name, description, userId, teamId);
+//    }
 }

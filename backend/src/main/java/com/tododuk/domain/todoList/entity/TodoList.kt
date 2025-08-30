@@ -6,20 +6,23 @@ import com.tododuk.domain.user.entity.User
 import com.tododuk.global.entity.BaseEntity
 import jakarta.persistence.*
 import lombok.NoArgsConstructor
-import lombok.Setter
 
 @Entity
-@Setter
 @NoArgsConstructor
 open class TodoList(
-    val name: String,
-    val description: String,
-    @field:JoinColumn(name = "user_id") @field:ManyToOne val user: User,
-    @field:JoinColumn(
-        name = "team_id"
-    ) @field:ManyToOne val team: Team
-) :
-    BaseEntity() {
+    var name: String?,
+    var description: String?,
+    
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    var user: User,
+
+    @ManyToOne
+    @JoinColumn(name = "team_id")
+    var team: Team
+
+) : BaseEntity() {
     @OneToMany(mappedBy = "todoList", fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE])
     val todo: List<Todo> = ArrayList()
 }
