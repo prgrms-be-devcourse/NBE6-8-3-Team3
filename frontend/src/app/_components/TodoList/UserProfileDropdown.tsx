@@ -16,6 +16,57 @@ interface UserProfileDropdownProps {
   userInfo?: UserInfo;
 }
 
+// 프로필 이미지 컴포넌트
+const ProfileImage: React.FC<{ 
+  imageUrl?: string; 
+  size?: 'small' | 'large';
+  className?: string; 
+}> = ({ imageUrl, size = 'small', className = '' }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  const API_BASE_URL = 'http://localhost:8080';
+  
+  // 이미지 URL 처리
+  const getImageUrl = (url?: string) => {
+    if (!url || url.trim() === '') {
+      return null;
+    }
+    
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    return `${API_BASE_URL}${url}`;
+  };
+
+  const imageUrl_processed = getImageUrl(imageUrl);
+  const sizeClass = size === 'large' ? 'profile-avatar-large' : 'user-avatar';
+  
+  if (!imageUrl_processed || imageError) {
+    return (
+      <div className={`${sizeClass} ${className}`}>
+        👤
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${sizeClass} ${className}`}>
+      <img 
+        src={imageUrl_processed}
+        alt="프로필 이미지"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          borderRadius: '50%'
+        }}
+        onError={() => setImageError(true)}
+      />
+    </div>
+  );
+};
+
 // 유저 프로필 버튼 컴포넌트 (드롭다운이 닫혀있을 때 사용)
 const UserProfileButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
   return (
@@ -67,6 +118,22 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
       console.error('프로필 정보 가져오기 실패:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // 날짜 포맷팅 함수
+  const formatDate = (dateString) => {
+    if (!dateString) return '정보 없음';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).replace(/\. /g, '.').replace(/\.$/, '');
+    } catch (error) {
+      return '정보 없음';
     }
   };
 
@@ -172,7 +239,10 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
           <>
             <div className="dropdown-header">
               <div className="user-header-info">
-                <div className="user-avatar">👤</div>
+                <ProfileImage 
+                  imageUrl={userProfileData?.profileImageUrl}
+                  size="small"
+                />
                 <div className="user-basic-info">
                   <div className="user-name">{userProfileData?.nickname || userName}</div>
                   <div className="user-role">{userProfileData?.email || userInfo.email}</div>
@@ -205,9 +275,10 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
               <span>프로필 상세정보</span>
             </div>
             <div className="profile-detail-content">
-              <div className="profile-avatar-large">
-                👤
-              </div>
+              <ProfileImage 
+                imageUrl={userProfileData?.profileImageUrl}
+                size="large"
+              />
               <div className="profile-info-section">
                 <div className="info-item">
                   <span className="info-label">닉네임</span>
@@ -219,7 +290,12 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({
                 </div>
                 <div className="info-item">
                   <span className="info-label">가입일</span>
-                  <span className="info-value">{userProfileData?.CreateDate ? new Date(userProfileData.createDate).toLocaleDateString('ko-KR') : userInfo.joinDate}</span>
+                  <span className="info-value">
+                    {userProfileData?.createDate 
+                      ? formatDate(userProfileData.createDate) 
+                      : userInfo.joinDate
+                    }
+                  </span>
                 </div>
               </div>
               <div className="profile-actions">
