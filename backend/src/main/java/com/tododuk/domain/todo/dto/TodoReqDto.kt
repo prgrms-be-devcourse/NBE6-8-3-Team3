@@ -17,7 +17,7 @@ class TodoReqDto (
     var priority: @NotNull Int = 0,
     var isCompleted: Boolean = false,
     var todoListId: Int = 0,
-    var startDate: LocalDateTime,
+    var startDate: LocalDateTime = LocalDateTime.now(),
     var dueDate: LocalDateTime? = null,
     var createdAt: LocalDateTime? = null,
     var modifyedAt: LocalDateTime? = null
