@@ -109,7 +109,7 @@ class TeamMemberController(
     fun deleteTeamMember(
         @PathVariable teamId: Int,
         @PathVariable memberUserId: Int
-    ): RsData<Void> {
+    ): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
         // 서비스로부터 받은 RsData 객체를 그대로 반환
         return teamMemberService.deleteTeamMember(teamId, memberUserId, authenticatedUser.id)
