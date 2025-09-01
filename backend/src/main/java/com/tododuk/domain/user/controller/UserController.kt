@@ -127,7 +127,7 @@ class UserController(
     @PostMapping("/me")
     fun updateMyInfo(
         @RequestBody reqBody: @Valid UserUpdateRequest
-    ): RsData<UserUpdateRequest?> {
+    ): RsData<UserUpdateRequest> {
         // 인증된 사용자 확인
         val actor = rq.getActor()
             ?: throw ServiceException("401-1", "인증된 사용자가 아닙니다.")
@@ -148,42 +148,39 @@ class UserController(
     }
 
     @PostMapping("/profile-image")
-    fun uploadProfileImage(
-        @RequestParam("profileImage") file: MultipartFile
-    ): RsData<MutableMap<String?, String?>?> {
-        // 현재 로그인한 사용자 정보 가져오기
+    fun manageProfileImage(
+        @RequestParam("profileImage", required = false) file: MultipartFile?,
+        @RequestParam("deleteImage", required = false, defaultValue = "false") deleteImage: Boolean
+    ): RsData<MutableMap<String, String>> {
         val actor = rq.getActor() ?: throw ServiceException("401-1", "로그인이 필요합니다.")
-
-        val userOptional = userService.findById(actor.id)
-        if (!userOptional.isPresent) {
-            throw ServiceException("404-1", "존재하지 않는 사용자입니다.")
+        val user = userService.findById(actor.id).orElseThrow {
+            ServiceException("404-1", "존재하지 않는 사용자입니다.")
         }
 
-        val user = userOptional.get()
+        val oldImageUrl = user.profileImgUrl
+        var newImageUrl = ""
 
-        // 기존 프로필 이미지가 있다면 삭제
-        user.profileImgUrl?.takeIf { it.isNotEmpty() }?.let {
-            fileUploadService.deleteProfileImage(it)
+        // 기존 이미지 삭제 (업로드나 삭제 모든 경우)
+        if (oldImageUrl.isNotEmpty()) {
+            try {
+                fileUploadService.deleteProfileImage(oldImageUrl)
+            } catch (e: Exception) {
+                println("기존 파일 삭제 실패: ${e.message}")
+            }
         }
 
-        // 새 프로필 이미지 업로드
-        val imageUrl = fileUploadService.uploadProfileImage(file, user.id.toLong())
+        // 이미지 삭제 요청이 아니고 파일이 있으면 업로드
+        if (!deleteImage && file != null && !file.isEmpty) {
+            newImageUrl = fileUploadService.uploadProfileImage(file, user.id.toLong())
+        }
+        // deleteImage가 true이면 newImageUrl은 빈 값("")으로 유지
 
-        // 사용자 정보 업데이트 - 기존 UserService의 updateUserInfo 메서드 활용
-        val updateDto = UserUpdateRequest(
-            user.nickName,     // nickname
-            imageUrl,          // profileImageUrl (새로운 이미지 URL)
-        )
-
-        userService.updateUserInfo(user, updateDto)
-
-        // 응답 데이터 구성
-        val responseData: MutableMap<String?, String?> = HashMap()
-        responseData["imageUrl"] = imageUrl
+        val responseData: MutableMap<String, String> = HashMap()
+        responseData["imageUrl"] = newImageUrl
 
         return RsData(
             "200-1",
-            "프로필 이미지 업로드 성공",
+            if (deleteImage) "프로필 이미지 삭제 성공" else "프로필 이미지 업로드 성공",
             responseData
         )
     }
@@ -191,7 +188,7 @@ class UserController(
     //로그 아웃
     @PostMapping("/logout")
     fun logout(request: HttpServletRequest): RsData<Void?> {
-        // 세션 무효화
+        // 세션 무효화 지금은 안 쓰임
         val session = request.getSession(false)
         if (session != null) {
             session.invalidate()

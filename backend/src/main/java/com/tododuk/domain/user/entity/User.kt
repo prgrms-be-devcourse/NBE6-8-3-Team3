@@ -26,7 +26,7 @@ open class User : BaseEntity {
     @Column(nullable = false)
     var isAdmin: Boolean = false
 
-    var profileImgUrl: String? = null
+    var profileImgUrl: String = ""
 
     @Column(unique = true)
     var apiKey: String = ""
@@ -57,7 +57,7 @@ open class User : BaseEntity {
         password: String,
         nickName: String,
         isAdmin: Boolean = false,
-        profileImgUrl: String? = null,
+        profileImgUrl: String,
         apiKey: String
     ) : super() {
         this.userEmail = userEmail
@@ -73,10 +73,11 @@ open class User : BaseEntity {
         userEmail = email,
         password = password,
         nickName = nickName,
+        profileImgUrl = "",
         apiKey = UUID.randomUUID().toString()
     )
 
-    // Rq.getActor()에서 사용하는 생성자
+    // Rq.getActor()에서 사용하는 생성자 (폐기 고려 중)
     constructor(id: Int, email: String) : super() {
         this.id = id
         this.userEmail = email
@@ -85,7 +86,7 @@ open class User : BaseEntity {
         this.apiKey = ""
     }
 
-    fun updateUserInfo(nickName: String, profileImgUrl: String?) {
+    fun updateUserInfo(nickName: String, profileImgUrl: String) {
         this.nickName = nickName
         this.profileImgUrl = profileImgUrl
     }
@@ -101,7 +102,7 @@ open class User : BaseEntity {
         private var password: String = ""
         private var nickName: String = ""
         private var isAdmin: Boolean = false
-        private var profileImgUrl: String? = null
+        private var profileImgUrl: String = ""
         private var apiKey: String = UUID.randomUUID().toString()
 
         fun userEmail(email: String): UserBuilder {
@@ -124,7 +125,7 @@ open class User : BaseEntity {
             return this
         }
 
-        fun profileImgUrl(url: String?): UserBuilder {
+        fun profileImgUrl(url: String): UserBuilder {
             this.profileImgUrl = url
             return this
         }
