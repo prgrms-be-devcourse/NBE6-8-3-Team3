@@ -8,7 +8,7 @@ data class UserDto(
     val id: Int,
     @JvmField val nickname: String,
     val email: String,
-    @JvmField val profileImageUrl: String? = null,
+    @JvmField val profileImageUrl: String,
     val createDate: LocalDateTime,
     val modifyDate: LocalDateTime
 ) {

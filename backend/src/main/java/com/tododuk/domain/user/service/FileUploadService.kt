@@ -82,9 +82,9 @@ class FileUploadService(
     }
 
     // 기존 파일 삭제
-    fun deleteProfileImage(imageUrl: String?) {
+    fun deleteProfileImage(imageUrl: String) {
         try {
-            imageUrl?.takeIf { it.startsWith("/uploads/profiles/") }?.let { url ->
+            imageUrl.takeIf { it.startsWith("/uploads/profiles/") }?.let { url ->
                 val filename = url.substring(url.lastIndexOf('/') + 1)
                 val filePath = Paths.get(System.getProperty("user.dir"), uploadPath, filename)
                 Files.deleteIfExists(filePath)
