@@ -140,7 +140,7 @@ class TeamController(
         description = "지정된 팀 ID에 해당하는 팀을 삭제합니다. (리더만 가능)"
     )
     @DeleteMapping("/{teamId}")
-    fun deleteTeam(@PathVariable teamId: Int): RsData<Void> {
+    fun deleteTeam(@PathVariable teamId: Int): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
         return teamService.deleteTeam(teamId, authenticatedUser.id)
     }
@@ -219,7 +219,7 @@ class TeamController(
     fun deleteTeamTodoList(
         @PathVariable teamId: Int,
         @PathVariable todoListId: Int
-    ): RsData<Void> {
+    ): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
         return teamService.deleteTeamTodoList(teamId, todoListId, authenticatedUser.id)
     }
@@ -277,7 +277,7 @@ class TeamController(
     fun deleteTeamTodo(
         @PathVariable teamId: Int,
         @PathVariable todoId: Int
-    ): RsData<Void> {
+    ): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
         return teamService.deleteTeamTodo(teamId, todoId, authenticatedUser.id)
     }
@@ -323,7 +323,7 @@ class TeamController(
     fun unassignTodo(
         @PathVariable teamId: Int,
         @PathVariable todoId: Int
-    ): RsData<Void> {
+    ): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
         return teamService.unassignTodo(teamId, todoId, authenticatedUser.id)
     }

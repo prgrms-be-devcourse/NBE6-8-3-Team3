@@ -23,14 +23,14 @@ import java.time.LocalDateTime
 @Transactional
 @Configuration
 class BaseInitData(
-        val labelService: LabelService,
-        val todoLabelRepository: TodoLabelRepository,
-        val todoRepository: TodoRepository,
-        val userRepository: UserRepository,
-        val teamRepository: TeamRepository,
-        val teamMemberRepository: TeamMemberRepository,
-        val passwordEncoder: PasswordEncoder,
-        val todoListRepository: TodoListRepository
+    val labelService: LabelService,
+    val todoLabelRepository: TodoLabelRepository,
+    val todoRepository: TodoRepository,
+    val userRepository: UserRepository,
+    val teamRepository: TeamRepository,
+    val teamMemberRepository: TeamMemberRepository,
+    val passwordEncoder: PasswordEncoder,
+    val todoListRepository: TodoListRepository
 ) {
     @PostConstruct
     fun init() {
@@ -72,8 +72,8 @@ class BaseInitData(
 
             // 팀 생성
             val team1 = Team(
-            "프론트엔드 개발팀",
-            "React, Next.js를 활용한 웹 프론트엔드 개발팀"
+                "프론트엔드 개발팀",
+                "React, Next.js를 활용한 웹 프론트엔드 개발팀"
             )
 
             val team2 = Team(
@@ -130,7 +130,6 @@ class BaseInitData(
             val todo1 = Todo(
                 "자바 공부하기",
                 "백엔드 부트캠프 주차별 과제 수행",
-                3,
                 false,
                 1, // High
                 LocalDateTime.of(2025, 7, 28, 9, 0),
@@ -141,7 +140,6 @@ class BaseInitData(
             val todo2 = Todo(
                 "운동하기",
                 "헬스장 가서 1시간 운동",
-                1,
                 false,
                 2, // Medium
                 LocalDateTime.of(2025, 7, 29, 7, 0),
