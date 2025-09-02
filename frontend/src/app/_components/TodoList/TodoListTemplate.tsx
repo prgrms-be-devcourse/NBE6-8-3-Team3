@@ -211,14 +211,16 @@ const TodoListTemplate: React.FC<PropsWithChildren> = ({
   // 읽지 않은 알림 개수 업데이트
   const updateUnreadCount = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/notifications', {
+      const token = localStorage.getItem('accessToken'); // 토큰 가져오기
+
+      const response = await fetch('http://localhost:8080/api/notifications/notime', {
         method: 'GET',
-        credentials: 'include',
         headers: {
+          'Authorization': `Bearer ${token}`,  // 토큰 추가
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.resultCode === '200-1') {
