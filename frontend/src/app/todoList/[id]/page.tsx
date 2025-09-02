@@ -9,6 +9,7 @@ import TodoListItems from './components/TodoListItems';
 import TodoCreateForm from './components/TodoCreateForm';
 import TodoDetailView from './components/TodoDetailView';
 import TodoEditForm from './components/TodoEditForm';
+
 interface Todo {
     id: number;
     title: string;
@@ -21,7 +22,7 @@ interface Todo {
     createdAt: string;
     updatedAt: string;
     labels?: Label[];
-    isNotificationEnabled?: boolean; // 🔥 새로 추가된 알림 필드
+    isNotificationEnabled?: boolean;
 }
 
 interface Label {
@@ -40,6 +41,19 @@ interface TodoListInfo {
     modifyDate: string;
 }
 
+// formatDateForInput 함수 정의 추가
+const formatDateForInput = (dateString?: string | null): string => {
+    if (!dateString || dateString === 'null' || dateString === 'undefined') return '';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 16);
+    } catch (error) {
+        console.error('Date formatting error:', error);
+        return '';
+    }
+};
+
 export default function TodoListPage() {
     const params = useParams();
     const todoListId = params.id as string;
@@ -50,25 +64,24 @@ export default function TodoListPage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [showCreateForm, setShowCreateForm] = useState<boolean>(false);
-    const [showEditForm, setShowEditForm] = useState<boolean>(false); // 수정 폼 상태 추가
+    const [showEditForm, setShowEditForm] = useState<boolean>(false);
 
-    // 새 TODO 폼 상태
     const [newTodo, setNewTodo] = useState({
         title: '',
         description: '',
         priority: 2,
         startDate: '',
         dueDate: '',
-        isNotificationEnabled: false // 🔥 알림 기본값 false로 추가
+        isNotificationEnabled: false
     });
-    // 수정 TODO 폼 상태 추가
+
     const [editTodo, setEditTodo] = useState({
         title: '',
         description: '',
         priority: 2,
         startDate: '',
         dueDate: '',
-        isNotificationEnabled: false // 🔥 알림 기본값 false로 추가
+        isNotificationEnabled: false
     });
     const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
 
@@ -122,7 +135,6 @@ export default function TodoListPage() {
             const todosResult = await todosResponse.json();
 
             if (todosResult.resultCode === '200-OK' || todosResult.resultCode === 'SUCCESS' || todosResponse.ok) {
-                // TodoList 정보가 이전에 실패했다면 첫 번째 Todo에서 가져오기
                 if (!todoListData && todosResult.data && todosResult.data.length > 0) {
                     const firstTodo = todosResult.data[0];
                     setTodoListInfo({
@@ -136,9 +148,11 @@ export default function TodoListPage() {
                     });
                 }
 
+                console.log('서버에서 받은 Todos 데이터:', todosResult.data); // 디버깅용
+
                 // 3. 각 Todo에 대해 라벨 정보 추가로 불러오기
                 const todosWithLabels = await Promise.all(
-                    (todosResult.data || []).map(async (todo: Todo) => {
+                    (todosResult.data || []).map(async (todo: any) => {
                         try {
                             const labelResponse = await fetch(`http://localhost:8080/api/todos/${todo.id}/labels`, {
                                 method: 'GET',
@@ -148,16 +162,32 @@ export default function TodoListPage() {
                                 },
                             });
 
+                            let labels = [];
                             if (labelResponse.ok) {
                                 const labelResult = await labelResponse.json();
-                                const labels = labelResult.data?.labels || [];
-                                return { ...todo, labels };
-                            } else {
-                                return { ...todo, labels: [] };
+                                labels = labelResult.data?.labels || [];
                             }
+
+                            // completed 필드 정규화 - 다양한 필드명 대응
+                            const normalizedTodo = {
+                                ...todo,
+                                completed: todo.completed ?? todo.isCompleted ?? todo.isComplete ?? false,
+                                labels
+                            };
+
+                            console.log(`Todo ${todo.id} completed 상태:`, {
+                                original: todo,
+                                normalized: normalizedTodo.completed
+                            }); // 디버깅용
+
+                            return normalizedTodo;
                         } catch (error) {
                             console.error(`Todo ${todo.id} 라벨 불러오기 실패:`, error);
-                            return { ...todo, labels: [] };
+                            return { 
+                                ...todo, 
+                                labels: [],
+                                completed: todo.completed ?? todo.isCompleted ?? todo.isComplete ?? false
+                            };
                         }
                     })
                 );
@@ -178,16 +208,14 @@ export default function TodoListPage() {
         fetchTodoListData();
     }, [todoListId]);
 
-    // 이벤트 핸들러들
     const handleTodoClick = (todo: Todo) => {
         setSelectedTodo(todo);
         setShowCreateForm(false);
-        setShowEditForm(false); // 수정 폼도 숨기기
+        setShowEditForm(false);
     };
 
     const handleCheckboxChange = async (todoId: number) => {
         try {
-            // 실제 API 호출로 완료 상태 토글 - 서버 API에 맞게 수정
             const response = await fetch(`http://localhost:8080/api/todo/${todoId}/complete`, {
                 method: 'PATCH',
                 credentials: 'include',
@@ -201,14 +229,10 @@ export default function TodoListPage() {
             }
 
             const result = await response.json();
-            console.log('Toggle API Response:', result); // 디버깅용
 
-            // 서버 응답에 따른 성공 처리
             if (result.resultCode === 'S-1' || result.resultCode === 'SUCCESS' || response.ok) {
-                // 서버에서 받은 업데이트된 TODO 데이터 사용
                 const updatedTodo = result.data;
 
-                // 로컬 상태 업데이트
                 setTodos(prevTodos =>
                     prevTodos.map(todo =>
                         todo.id === todoId
@@ -221,7 +245,6 @@ export default function TodoListPage() {
                     )
                 );
 
-                // 선택된 todo도 업데이트
                 if (selectedTodo?.id === todoId) {
                     setSelectedTodo(prev => prev ? {
                         ...prev,
@@ -230,17 +253,12 @@ export default function TodoListPage() {
                     } : null);
                 }
 
-                console.log(`✅ 할 일 ${todoId} 상태가 변경되었습니다.`);
-
-                // 목록 새로고침 (서버 데이터와 동기화) - 선택사항
-                // await fetchTodoListData();
+                console.log(`할 일 ${todoId} 상태가 변경되었습니다.`);
             } else {
                 throw new Error(result.msg || result.message || 'Failed to toggle todo status');
             }
         } catch (error) {
             console.error('Failed to toggle todo:', error);
-
-            // 구체적인 에러 메시지
             let errorMessage = '할 일 상태 변경에 실패했습니다.';
             if (error instanceof Error) {
                 if (error.message.includes('404')) {
@@ -251,23 +269,19 @@ export default function TodoListPage() {
                     errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
                 }
             }
-
             alert(errorMessage);
-
-            // 에러 발생 시 원래 상태로 복구 (옵션)
-            // await fetchTodoListData();
         }
     };
 
     const handleEdit = () => {
         if (selectedTodo) {
             setEditTodo({
-                title: selectedTodo.title,
-                description: selectedTodo.description,
-                priority: selectedTodo.priority,
-                startDate: formatDateForInput(selectedTodo.startDate),
-                dueDate: formatDateForInput(selectedTodo.dueDate),
-                isNotificationEnabled: selectedTodo.isNotificationEnabled || false // 🔥 기존 알림 설정 값 적용
+                title: selectedTodo.title || '',
+                description: selectedTodo.description || '',
+                priority: selectedTodo.priority || 2,
+                startDate: formatDateForInput(selectedTodo.startDate) || '',
+                dueDate: formatDateForInput(selectedTodo.dueDate) || '',
+                isNotificationEnabled: selectedTodo.isNotificationEnabled || false
             });
             setShowEditForm(true);
             setShowCreateForm(false);
@@ -277,13 +291,11 @@ export default function TodoListPage() {
 
     const handleDelete = async () => {
         if (selectedTodo) {
-            // 삭제 확인 다이얼로그 추가
             if (!confirm(`"${selectedTodo.title}" 할 일을 삭제하시겠습니까?`)) {
                 return;
             }
 
             try {
-                // CSRF 토큰을 먼저 가져오기 (필요한 경우)
                 let csrfToken = null;
                 try {
                     const metaCsrf = document.querySelector('meta[name="_csrf"]');
@@ -298,41 +310,27 @@ export default function TodoListPage() {
                     console.log('CSRF token not found in meta tags');
                 }
 
-                // 헤더 설정
-                const headers = {
+                const headers: any = {
                     'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest' // AJAX 요청임을 명시
+                    'X-Requested-With': 'XMLHttpRequest'
                 };
 
-                // CSRF 토큰이 있으면 헤더에 추가
                 if (csrfToken) {
                     headers[csrfToken.header] = csrfToken.token;
                 }
 
-                // 실제 API 호출로 삭제 - 서버 API에 맞게 수정
                 const response = await fetch(`http://localhost:8080/api/todo/${selectedTodo.id}`, {
                     method: 'DELETE',
                     credentials: 'include',
                     headers: headers
                 });
 
-                console.log('Delete API Response Status:', response.status); // 디버깅용
-                console.log('Delete API Headers sent:', headers); // 헤더 확인
-
-                // 401 오류 특별 처리
                 if (response.status === 401) {
-                    console.error('401 Unauthorized - 인증 문제 발생');
-                    console.log('Request headers:', headers);
-
-                    // 추가 디버깅 정보
-                    console.log('Cookies:', document.cookie);
-
                     alert('인증에 실패했습니다. CSRF 토큰이나 세션 문제일 수 있습니다.');
                     return;
                 }
 
                 if (!response.ok) {
-                    // 응답 본문도 확인 (오류 상세 정보)
                     let errorText = '';
                     try {
                         const errorBody = await response.text();
@@ -341,34 +339,20 @@ export default function TodoListPage() {
                     } catch (e) {
                         console.log('Could not read error response body');
                     }
-
                     throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
                 }
 
                 const result = await response.json();
-                console.log('Delete API Response:', result); // 디버깅용
 
-                // 서버 응답에 따른 성공 처리
                 if (result.resultCode === 'S-1' || result.resultCode === 'SUCCESS' || response.ok) {
-                    // 성공 시 로컬 상태에서 제거
                     setTodos(prevTodos => prevTodos.filter(todo => todo.id !== selectedTodo.id));
                     setSelectedTodo(null);
-
-                    console.log(`✅ 할 일 "${selectedTodo.title}"가 삭제되었습니다.`);
-
-                    // 목록 새로고침 (서버 데이터와 동기화)
                     await refreshTodoList();
                 } else {
                     throw new Error(result.msg || result.message || 'Failed to delete todo');
                 }
             } catch (error) {
                 console.error('Failed to delete todo:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    stack: error.stack
-                });
-
-                // 구체적인 에러 메시지
                 let errorMessage = '할 일 삭제에 실패했습니다.';
                 if (error instanceof Error) {
                     if (error.message.includes('401')) {
@@ -385,10 +369,7 @@ export default function TodoListPage() {
                         errorMessage = '네트워크 연결을 확인해주세요.';
                     }
                 }
-
                 alert(errorMessage + '\n\n개발자 도구의 Console과 Network 탭을 확인해보세요.');
-
-                // 데이터 새로고침으로 일관성 유지
                 try {
                     await refreshTodoList();
                 } catch (refreshError) {
@@ -400,9 +381,8 @@ export default function TodoListPage() {
 
     const handleCreateTodo = () => {
         setShowCreateForm(true);
-        setShowEditForm(false); // 수정 폼 숨기기
+        setShowEditForm(false);
         setSelectedTodo(null);
-        // 현재 날짜를 기본값으로 설정
         const now = new Date();
         const today = now.toISOString().slice(0, 16);
         const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
@@ -412,10 +392,12 @@ export default function TodoListPage() {
             description: '',
             priority: 2,
             startDate: today,
-            dueDate: tomorrow
+            dueDate: tomorrow,
+            isNotificationEnabled: false
         });
         setFormErrors({});
     };
+
     const handleFormChange = (field: string, value: string | number | boolean) => {
         if (showEditForm) {
             setEditTodo(prev => ({ ...prev, [field]: value }));
@@ -451,7 +433,7 @@ export default function TodoListPage() {
         return Object.keys(errors).length === 0;
     };
 
-    // TodoCreateForm props 타입 수정
+    // 수정된 handleSubmitTodo 함수
     const handleSubmitTodo = async (selectedLabels?: number[]) => {
         if (!validateForm()) return;
 
@@ -466,7 +448,7 @@ export default function TodoListPage() {
                 todoListId: parseInt(todoListId),
                 startDate: currentTodo.startDate,
                 dueDate: currentTodo.dueDate || null,
-                isNotificationEnabled: currentTodo.isNotificationEnabled || false, // 🔥 알림 설정 포함
+                isNotificationEnabled: currentTodo.isNotificationEnabled || false,
                 createdAt: selectedTodo?.createdAt || new Date().toISOString(),
                 modifyedAt: new Date().toISOString()
             };
@@ -486,20 +468,77 @@ export default function TodoListPage() {
                 body: JSON.stringify(todoData)
             });
 
-            // ... 나머지 처리 로직
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.resultCode === 'S-1' || result.resultCode === 'SUCCESS' || response.ok) {
+                const newTodoData = result.data;
+                
+                // completed 필드 정규화
+                if (newTodoData) {
+                    newTodoData.completed = newTodoData.completed ?? newTodoData.isCompleted ?? newTodoData.isComplete ?? false;
+                }
+
+                if (isEdit) {
+                    // 수정인 경우
+                    setTodos(prevTodos =>
+                        prevTodos.map(todo =>
+                            todo.id === selectedTodo.id ? { ...todo, ...newTodoData } : todo
+                        )
+                    );
+                    setSelectedTodo(prev => prev ? { ...prev, ...newTodoData } : null);
+                } else {
+                    // 새로 생성인 경우
+                    await refreshTodoList(); // 목록 새로고침
+                    
+                    // 생성된 할일을 선택된 할일로 설정
+                    if (newTodoData && newTodoData.id) {
+                        // 약간의 지연 후 선택하여 UI 업데이트가 완료되도록 함
+                        setTimeout(() => {
+                            setSelectedTodo(newTodoData);
+                        }, 100);
+                    }
+                }
+
+                // 폼 상태 리셋
+                setShowCreateForm(false);
+                setShowEditForm(false);
+                setNewTodo({
+                    title: '',
+                    description: '',
+                    priority: 2,
+                    startDate: '',
+                    dueDate: '',
+                    isNotificationEnabled: false
+                });
+                setEditTodo({
+                    title: '',
+                    description: '',
+                    priority: 2,
+                    startDate: '',
+                    dueDate: '',
+                    isNotificationEnabled: false
+                });
+                setFormErrors({});
+
+                console.log(`할 일이 ${isEdit ? '수정' : '생성'}되었습니다.`);
+            } else {
+                throw new Error(result.msg || result.message || `Failed to ${isEdit ? 'update' : 'create'} todo`);
+            }
         } catch (error) {
-            console.error('Todo 저장 실패:', error);
-            alert('할 일 저장에 실패했습니다.');
+            console.error(`Todo ${showEditForm ? '수정' : '저장'} 실패:`, error);
+            alert(`할 일 ${showEditForm ? '수정' : '저장'}에 실패했습니다.`);
         }
     };
-
 
     // 새로고침용 함수 (로딩 상태 없이)
     const refreshTodoList = async () => {
         if (!todoListId) return;
 
         try {
-            // 1. TodoList 정보 새로고침
             const todoListResponse = await fetch(`http://localhost:8080/api/todo-lists/${todoListId}`, {
                 method: 'GET',
                 credentials: 'include',
@@ -525,7 +564,6 @@ export default function TodoListPage() {
                 }
             }
 
-            // 2. Todo 목록 새로고침
             const todosResponse = await fetch(`http://localhost:8080/api/todo/list/${todoListId}`, {
                 method: 'GET',
                 credentials: 'include',
@@ -541,7 +579,6 @@ export default function TodoListPage() {
             const todosResult = await todosResponse.json();
 
             if (todosResult.resultCode === '200-OK' || todosResult.resultCode === 'SUCCESS' || todosResponse.ok) {
-                // TodoList 정보가 이전에 실패했다면 첫 번째 Todo에서 가져오기
                 if (!todoListData && todosResult.data && todosResult.data.length > 0) {
                     const firstTodo = todosResult.data[0];
                     setTodoListInfo({
@@ -555,9 +592,8 @@ export default function TodoListPage() {
                     });
                 }
 
-                // 3. 각 Todo에 대해 라벨 정보도 함께 불러오기
                 const todosWithLabels = await Promise.all(
-                    (todosResult.data || []).map(async (todo: Todo) => {
+                    (todosResult.data || []).map(async (todo: any) => {
                         try {
                             const labelResponse = await fetch(`http://localhost:8080/api/todos/${todo.id}/labels`, {
                                 method: 'GET',
@@ -567,16 +603,25 @@ export default function TodoListPage() {
                                 },
                             });
 
+                            let labels = [];
                             if (labelResponse.ok) {
                                 const labelResult = await labelResponse.json();
-                                const labels = labelResult.data?.labels || [];
-                                return { ...todo, labels };
-                            } else {
-                                return { ...todo, labels: [] };
+                                labels = labelResult.data?.labels || [];
                             }
+
+                            // completed 필드 정규화
+                            return {
+                                ...todo,
+                                completed: todo.completed ?? todo.isCompleted ?? todo.isComplete ?? false,
+                                labels
+                            };
                         } catch (error) {
                             console.error(`Todo ${todo.id} 라벨 불러오기 실패:`, error);
-                            return { ...todo, labels: [] };
+                            return { 
+                                ...todo, 
+                                labels: [],
+                                completed: todo.completed ?? todo.isCompleted ?? todo.isComplete ?? false
+                            };
                         }
                     })
                 );
@@ -585,7 +630,6 @@ export default function TodoListPage() {
             }
         } catch (err) {
             console.error('Failed to refresh todo list:', err);
-            // 새로고침 실패는 조용히 처리 (기존 데이터 유지)
         }
     };
 
@@ -598,7 +642,7 @@ export default function TodoListPage() {
             priority: 2,
             startDate: '',
             dueDate: '',
-            isNotificationEnabled: false // 🔥 취소 시 알림 설정 초기화
+            isNotificationEnabled: false
         });
         setEditTodo({
             title: '',
@@ -606,12 +650,11 @@ export default function TodoListPage() {
             priority: 2,
             startDate: '',
             dueDate: '',
-            isNotificationEnabled: false // 🔥 취소 시 알림 설정 초기화
+            isNotificationEnabled: false
         });
         setFormErrors({});
     };
 
-    // 로딩 및 에러 상태
     if (loading) {
         return (
             <TodoListTemplate>
@@ -635,11 +678,11 @@ export default function TodoListPage() {
                         TodoList를 불러오는 중...
                     </p>
                     <style jsx>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
+                        @keyframes spin {
+                          0% { transform: rotate(0deg); }
+                          100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
                 </div>
             </TodoListTemplate>
         );
@@ -686,31 +729,29 @@ export default function TodoListPage() {
 
     return (
         <TodoListTemplate>
-            {/* CSS 강제 오버라이드 - 적당한 크기로 조정 */}
             <style jsx global>{`
-        .content {
-          max-width: none !important;
-          width: 100% !important;
-          align-items: stretch !important;
-          justify-content: flex-start !important;
-          text-align: left !important;
-          padding: 1rem !important;
-        }
-        .todo-list-template {
-          max-width: none !important;
-          width: 100% !important;
-        }
-        .main-container {
-          max-width: none !important;
-          width: 100% !important;
-        }
-      `}</style>
+                .content {
+                  max-width: none !important;
+                  width: 100% !important;
+                  align-items: stretch !important;
+                  justify-content: flex-start !important;
+                  text-align: left !important;
+                  padding: 1rem !important;
+                }
+                .todo-list-template {
+                  max-width: none !important;
+                  width: 100% !important;
+                }
+                .main-container {
+                  max-width: none !important;
+                  width: 100% !important;
+                }
+            `}</style>
 
-            {/* 전체 컨테이너 - 너비 25% 줄임 + 최소 너비 설정 */}
             <div style={{
-                width: '70%', // 95% -> 70%로 25% 줄임 (95% - 25% = 70%)
-                maxWidth: '1500px', // 2000px -> 1500px로 줄임
-                minWidth: '800px', // 전체 최소 너비 800px 설정
+                width: '70%',
+                maxWidth: '1500px',
+                minWidth: '800px',
                 margin: '0 auto',
                 padding: '0 2rem',
                 display: 'flex',
@@ -718,7 +759,7 @@ export default function TodoListPage() {
                 justifyContent: 'flex-start',
                 textAlign: 'left',
                 height: '100%',
-                overflowX: 'auto' // 가로 스크롤 허용
+                overflowX: 'auto'
             }}>
                 <div style={{
                     display: 'flex',
@@ -728,17 +769,16 @@ export default function TodoListPage() {
                     padding: 0,
                     overflow: 'hidden',
                     gap: '2rem',
-                    minWidth: '1100px' // 1000px -> 1100px로 증가
+                    minWidth: '1100px'
                 }}>
-                    {/* 왼쪽: 투두리스트 + 투두목록 - 최소 너비 고정 */}
                     <div style={{
                         width: '40%',
-                        minWidth: '400px', // 최소 너비 400px 고정
+                        minWidth: '400px',
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '1.5rem',
-                        flexShrink: 0 // 축소 방지
+                        flexShrink: 0
                     }}>
                         <TodoListInfoComponent
                             todoListInfo={todoListInfo}
@@ -753,22 +793,20 @@ export default function TodoListPage() {
                             onCreateTodo={handleCreateTodo}
                         />
                     </div>
-
-                    {/* 오른쪽: 선택된 Todo 상세 정보 또는 새 TODO 생성 폼 - 최소 너비 고정 */}
                     <div style={{
                         width: '40%',
-                        minWidth: '450px', // 350px -> 450px로 증가 (약 100px 더 넓게)
+                        minWidth: '450px',
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        flexShrink: 0 // 축소 방지
+                        flexShrink: 0
                     }}>
                         {showCreateForm ? (
                             <TodoCreateForm
                                 newTodo={newTodo}
                                 formErrors={formErrors}
                                 onFormChange={handleFormChange}
-                                onSubmit={handleSubmitTodo} // 이제 selectedLabels를 받을 수 있음
+                                onSubmit={handleSubmitTodo}
                                 onCancel={handleCancelCreate}
                             />
                         ) : showEditForm && selectedTodo ? (
@@ -777,7 +815,7 @@ export default function TodoListPage() {
                                 editTodo={editTodo}
                                 formErrors={formErrors}
                                 onFormChange={handleFormChange}
-                                onSubmit={handleSubmitTodo} // 이제 selectedLabels를 받을 수 있음
+                                onSubmit={handleSubmitTodo}
                                 onCancel={handleCancelCreate}
                             />
                         ) : selectedTodo ? (
