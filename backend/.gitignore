@@ -43,6 +43,7 @@ db_dev.trace.db
 ### Environment Variable File ###
 .env.DS_Store
 .DS_Store
+.env
 
 ### Test File ###
 ApiV1LabelControllerTest.kt
