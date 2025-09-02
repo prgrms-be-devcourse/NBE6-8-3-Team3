@@ -21,7 +21,8 @@ class SecurityConfig(
         val PERMIT_ALL_PATHS = arrayOf(
             "/api/v1/user/login",
             "/api/v1/user/logout",
-            "/api/v1/user/register"
+            "/api/v1/user/register",
+            "oauth2/authorization/kakao"
         )
     }
 
@@ -67,6 +68,7 @@ class SecurityConfig(
             }
             // csrf 설정 끔 (rest api에서는 csrf를 사용하지 않음)
             .csrf { csrf -> csrf.disable() }
+            .oauth2Login { oauth2 -> }
 
             // Spring Security에서 인증/인가 실패 시 커스텀 JSON 응답 로직
             .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
