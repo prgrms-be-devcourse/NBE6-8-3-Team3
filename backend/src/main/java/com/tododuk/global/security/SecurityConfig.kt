@@ -21,7 +21,8 @@ class SecurityConfig(
         val PERMIT_ALL_PATHS = arrayOf(
             "/api/v1/user/login",
             "/api/v1/user/logout",
-            "/api/v1/user/register"
+            "/api/v1/user/register",
+            "oauth2/authorization/kakao"
         )
     }
 
