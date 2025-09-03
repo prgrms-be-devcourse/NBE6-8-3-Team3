@@ -1,4 +1,4 @@
-package com.back.global.security
+package com.tododuk.global.security
 
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository

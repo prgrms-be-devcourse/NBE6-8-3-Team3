@@ -1,10 +1,10 @@
 package com.tododuk.domain.user.service
 
-import com.tododuk.domain.user.dto.UserDto
 import com.tododuk.domain.user.dto.UserUpdateRequest
 import com.tododuk.domain.user.entity.User
 import com.tododuk.domain.user.repository.UserRepository
 import com.tododuk.global.exception.ServiceException
+import com.tododuk.global.rsData.RsData
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -75,5 +75,30 @@ class UserService(
         if (password == null || !passwordEncoder.matches(password, user.password)) {
             throw ServiceException("400-1", "비밀번호가 일치하지 않습니다.")
         }
+    }
+    fun findByOAuthUserEmail(useremail: String): User? = findByUserEmailOrNull(useremail)
+
+    fun joinOAuth(email: String, password: String, nickname: String, profileImgUrl: String?): User {
+        // 중복 체크 - Optional 스타일 메서드 사용
+        if (findByUserEmail(email).isPresent) {
+            throw ServiceException("409-1", "이미 존재하는 이메일입니다.")
+        }
+
+        val encodedPassword = passwordEncoder.encode(password)
+        val user = User(email, encodedPassword, nickname)
+        return userRepository.save(user)
+    }
+    fun modifyOrJoin(useremail: String, password: String?, nickname: String, profileImgUrl: String?): RsData<User> =
+        findByOAuthUserEmail(useremail)
+            ?.let {
+                modify(it, nickname, profileImgUrl)
+                RsData("200-1", "회원 정보가 수정되었습니다.", it)
+            } ?: run {
+            val joined = joinOAuth(useremail, "", nickname, profileImgUrl)
+            RsData("201-1", "회원가입이 완료되었습니다.", joined)
+        }
+
+    fun modify(user: User, nickname: String, profileImgUrl: String?) {
+        user.modify(nickname, profileImgUrl)
     }
 }
