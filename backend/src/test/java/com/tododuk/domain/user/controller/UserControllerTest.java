@@ -3,7 +3,7 @@ package com.tododuk.domain.user.controller;
 import com.tododuk.domain.user.entity.User;
 import com.tododuk.domain.user.service.UserService;
 import jakarta.servlet.http.Cookie;
-import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +31,22 @@ public class UserControllerTest {
     private MockMvc mvc;
     @Autowired
     private UserService userService;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        // 모든 테스트 전에 사용자 생성
+        mvc.perform(
+                post("/api/v1/user/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                {
+                    "email": "usernew@gmail.com",
+                    "password": "1234",
+                    "nickname": "무명2"
+                }
+                """)
+        );
+    }
 
     @Test
     @DisplayName("회원가입")
@@ -120,7 +136,7 @@ public class UserControllerTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-1"))
-                .andExpect(jsonPath("$.msg").value("내 정보 조회 성공"))
+                .andExpect(jsonPath("$.msg").value("내 정보 상세 조회 성공"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.id").value(user.getId()))
                 .andExpect(jsonPath("$.data.email").value(user.getUserEmail()))

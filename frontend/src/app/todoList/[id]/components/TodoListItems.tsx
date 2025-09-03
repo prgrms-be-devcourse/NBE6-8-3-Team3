@@ -1,303 +1,334 @@
 import React from 'react';
 
 interface Label {
-  id: number;
-  name: string;
-  color: string;
+    id: number;
+    name: string;
+    color: string;
 }
 
 interface Todo {
-  id: number;
-  title: string;
-  description: string;
-  completed: boolean;
-  priority: number;
-  startDate: string;
-  dueDate: string | null;
-  todoList: number;
-  createdAt: string;
-  updatedAt: string;
-  labels?: Label[]; // 라벨 정보 추가
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+    priority: number;
+    startDate: string;
+    dueDate: string;
+    todoList: number;
+    createdAt: string;
+    updatedAt: string;
+    labels?: Label[];
+    isNotificationEnabled?: boolean; // 알림 필드 추가
 }
 
 interface TodoListItemsProps {
-  todos: Todo[];
-  selectedTodo: Todo | null;
-  onTodoClick: (todo: Todo) => void;
-  onCheckboxChange: (todoId: number) => void;
-  onCreateTodo: () => void;
+    todos: Todo[];
+    selectedTodo: Todo | null;
+    onTodoClick: (todo: Todo) => void;
+    onCheckboxChange: (todoId: number) => void;
+    onCreateTodo: () => void;
 }
 
 const TodoListItems: React.FC<TodoListItemsProps> = ({
-  todos,
-  selectedTodo,
-  onTodoClick,
-  onCheckboxChange,
-  onCreateTodo
-}) => {
-  const getPriorityLabel = (priority: number) => {
+                                                         todos,
+                                                         selectedTodo,
+                                                         onTodoClick,
+                                                         onCheckboxChange,
+                                                         onCreateTodo
+                                                     }) => {
+    const getPriorityColor = (priority: number) => {
     switch (priority) {
-      case 3:
-        return { label: '높음', color: 'bg-red-100 text-red-600' };
-      case 2:
-        return { label: '중간', color: 'bg-yellow-100 text-yellow-600' };
-      case 1:
-        return { label: '낮음', color: 'bg-blue-100 text-blue-600' };
-      default:
-        return { label: '일반', color: 'bg-gray-100 text-gray-600' };
+        case 3:
+            return '#dc2626'; // 높음 - 빨간색
+        case 2:
+            return '#eab308'; // 중간 - 노란색
+        case 1:
+            return '#16a34a'; // 낮음 - 초록색
+        default:
+            return '#6b7280'; // 기본 - 회색
     }
-  };
+};
 
-  // 날짜 표시 함수 - dueDate가 null이면 startDate 사용
-  const getDisplayDate = (todo: Todo) => {
-    const dateToShow = todo.dueDate || todo.startDate;
-    const dateObj = new Date(dateToShow);
-    const label = todo.dueDate ? '📅' : '🗓️'; // 마감일과 시작일 구분
-    return `${label} ${dateObj.toLocaleDateString()}`;
-  };
+    const getPriorityLabel = (priority: number) => {
+        switch (priority) {
+            case 3:
+                return '높음';
+            case 2:
+                return '중간';
+            case 1:
+                return '낮음';
+            default:
+                return '일반';
+        }
+    };
 
-  return (
-    <div style={{
-      background: 'var(--bg-white)',
-      borderRadius: '12px',
-      padding: '2.5rem',
-      boxShadow: '0 4px 12px var(--shadow-md)',
-      border: '1px solid var(--border-light)',
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: 0
-    }}>
-      <h2 style={{
-        fontSize: '1.5rem',
-        fontWeight: '600',
-        color: 'var(--text-primary)',
-        marginBottom: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem'
-      }}>
-        📝 할 일 목록
-      </h2>
-      
-      {todos.length === 0 ? (
+    return (
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          flexDirection: 'column',
-          gap: '1.5rem',
-          color: 'var(--text-light)',
-          border: '2px dashed var(--border-medium)',
-          borderRadius: '8px',
-          padding: '3rem'
-        }}>
-          <div style={{ fontSize: '4rem' }}>📝</div>
-          <p style={{ fontSize: '1.3rem' }}>등록된 할 일이 없습니다.</p>
-        </div>
-      ) : (
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '1rem',
-          flex: 1,
-          overflowY: 'auto',
-          paddingRight: '0.75rem'
-        }}>
-          {todos.map((todo) => (
-            <div
-              key={todo.id}
-              style={{
-                background: selectedTodo?.id === todo.id ? 'var(--primary-light)' : 'var(--bg-main)',
-                borderRadius: '10px',
-                padding: '1.5rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                borderLeft: `5px solid ${
-                  todo.priority === 3 ? '#dc2626' : 
-                  todo.priority === 2 ? '#eab308' : 
-                  '#2563eb'
-                }`,
-                border: selectedTodo?.id === todo.id 
-                  ? '2px solid var(--primary-color)' 
-                  : '1px solid var(--border-light)',
-                minHeight: todo.labels && todo.labels.length > 0 ? '170px' : '140px' // 라벨이 있으면 높이 증가
-              }}
-              onClick={() => onTodoClick(todo)}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                <input
-                  type="checkbox"
-                  checked={todo.completed}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    onCheckboxChange(todo.id);
-                  }}
-                  style={{ 
-                    width: '24px',
-                    height: '24px',
-                    marginTop: '0.125rem',
-                    accentColor: 'var(--primary-color)'
-                  }}
-                />
-                <div style={{ flex: 1 }}>
-                  <h3 style={{
-                    fontWeight: '600',
-                    fontSize: '1.2rem',
-                    color: todo.completed ? 'var(--text-light)' : 'var(--text-primary)',
-                    textDecoration: todo.completed ? 'line-through' : 'none',
-                    marginBottom: '0.75rem',
-                    lineHeight: '1.4',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {todo.title}
-                  </h3>
-                  <p style={{
-                    color: 'var(--text-secondary)',
-                    fontSize: '1rem',
-                    marginBottom: '1rem',
-                    lineHeight: '1.5',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    height: '3em'
-                  }}>
-                    {todo.description}
-                  </p>
-
-                  {/* 우선순위, 날짜, 라벨을 한 줄에 표시 */}
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    gap: '0.75rem',
-                    flexWrap: 'wrap' // 공간이 부족하면 줄바꿈 허용
-                  }}>
-                    {/* 왼쪽: 우선순위와 라벨들 */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      flexWrap: 'wrap',
-                      flex: 1
-                    }}>
-                      <span style={{
-                        fontSize: '0.85rem',
-                        padding: '0.375rem 0.75rem',
-                        borderRadius: '15px',
-                        fontWeight: '600',
-                        background: todo.priority === 3 ? '#fef2f2' : 
-                                  todo.priority === 2 ? '#fefce8' : '#eff6ff',
-                        color: todo.priority === 3 ? '#dc2626' : 
-                               todo.priority === 2 ? '#eab308' : '#2563eb'
-                      }}>
-                        {getPriorityLabel(todo.priority).label}
-                      </span>
-
-                      {/* 라벨들을 우선순위 바로 옆에 표시 */}
-                      {todo.labels && todo.labels.length > 0 && (
-                        <>
-                          {todo.labels.slice(0, 2).map(label => (
-                            <span
-                              key={label.id}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                padding: '0.25rem 0.5rem',
-                                backgroundColor: label.color,
-                                color: 'white',
-                                borderRadius: '12px',
-                                fontSize: '0.7rem',
-                                fontWeight: '500',
-                                maxWidth: '70px',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: '5px',
-                                  height: '5px',
-                                  borderRadius: '50%',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                  flexShrink: 0
-                                }}
-                              />
-                              {label.name}
-                            </span>
-                          ))}
-                          {todo.labels.length > 2 && (
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              padding: '0.25rem 0.4rem',
-                              backgroundColor: '#6b7280',
-                              color: 'white',
-                              borderRadius: '12px',
-                              fontSize: '0.7rem',
-                              fontWeight: '500'
-                            }}>
-                              +{todo.labels.length - 2}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* 오른쪽: 날짜 */}
-                    <span style={{
-                      fontSize: '0.85rem',
-                      color: 'var(--text-light)',
-                      fontWeight: '500',
-                      flexShrink: 0
-                    }}>
-                      {getDisplayDate(todo)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* TODO 추가 버튼 */}
-      <div style={{ 
-        marginTop: '1.5rem',
-        paddingTop: '1.5rem',
-        borderTop: '1px solid var(--border-light)' 
-      }}>
-        <button
-          onClick={onCreateTodo}
-          style={{
-            width: '100%',
-            padding: '1.25rem',
-            background: 'var(--primary-color)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            fontSize: '1.1rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            background: 'var(--bg-white)',
+            borderRadius: '12px',
+            padding: '2rem',
+            boxShadow: '0 4px 12px var(--shadow-md)',
+            border: '1px solid var(--border-light)',
+            height: '100%',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.75rem'
-          }}
-        >
-          ➕ 새 할 일 추가
-        </button>
-      </div>
-    </div>
-  );
+            flexDirection: 'column'
+        }}>
+            {/* 헤더 */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '2rem',
+                paddingBottom: '1rem',
+                borderBottom: '2px solid var(--border-light)'
+            }}>
+                <h3 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: 'var(--text-primary)',
+                    margin: 0
+                }}>
+                    📋 할일 목록 ({todos.length})
+                </h3>
+                <button
+                    onClick={onCreateTodo}
+                    style={{
+                        padding: '0.75rem 1.5rem',
+                        background: 'var(--primary-color)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}
+                >
+                    ✨ 새 할일
+                </button>
+            </div>
+
+            {/* Todo 리스트 */}
+            <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+            }}>
+                {todos.length === 0 ? (
+                    <div style={{
+                        textAlign: 'center',
+                        color: 'var(--text-secondary)',
+                        fontSize: '1.1rem',
+                        padding: '3rem 2rem'
+                    }}>
+                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📝</div>
+                        <p style={{ margin: '0 0 1rem 0' }}>아직 등록된 할일이 없습니다.</p>
+                        <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-light)' }}>
+                            새 할일 버튼을 눌러 첫 번째 할일을 추가해보세요!
+                        </p>
+                    </div>
+                ) : (
+                    todos.map(todo => (
+                        <div
+                            key={todo.id}
+                            onClick={() => onTodoClick(todo)}
+                            style={{
+                                padding: '1.5rem',
+                                border: `2px solid ${
+                                    selectedTodo?.id === todo.id
+                                        ? 'var(--primary-color)'
+                                        : 'var(--border-light)'
+                                }`,
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                background: selectedTodo?.id === todo.id
+                                    ? '#f0f9ff'
+                                    : 'white',
+                                opacity: todo.completed ? 0.7 : 1
+                            }}
+                            onMouseEnter={(e) => {
+                                if (selectedTodo?.id !== todo.id) {
+                                    e.currentTarget.style.background = '#f8fafc';
+                                    e.currentTarget.style.borderColor = 'var(--border-medium)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (selectedTodo?.id !== todo.id) {
+                                    e.currentTarget.style.background = 'white';
+                                    e.currentTarget.style.borderColor = 'var(--border-light)';
+                                }
+                            }}
+                        >
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '1rem'
+                            }}>
+                                <input
+                                    type="checkbox"
+                                    checked={todo.completed}
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        onCheckboxChange(todo.id);
+                                    }}
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        marginTop: '0.25rem',
+                                        accentColor: 'var(--primary-color)',
+                                        cursor: 'pointer'
+                                    }}
+                                />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    {/* 제목 및 알림 표시 */}
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        marginBottom: '0.75rem'
+                                    }}>
+                                        <h4 style={{
+                                            fontSize: '1.2rem',
+                                            fontWeight: '600',
+                                            color: todo.completed ? 'var(--text-light)' : 'var(--text-primary)',
+                                            textDecoration: todo.completed ? 'line-through' : 'none',
+                                            margin: 0,
+                                            wordBreak: 'break-word',
+                                            flex: 1
+                                        }}>
+                                            {todo.title}
+                                        </h4>
+                                        {/* 알림 설정된 경우 종모양 이모지 표시 */}
+                                        {todo.isNotificationEnabled && (
+                                            <span
+                                                style={{
+                                                    fontSize: '1rem',
+                                                    opacity: 0.7
+                                                }}
+                                                title="알림이 설정된 할일입니다"
+                                            >
+                        🔔
+                      </span>
+                                        )}
+                                        {/* 우선순위 표시 */}
+                                        <span style={{
+                                            fontSize: '0.8rem',
+                                            padding: '0.25rem 0.6rem',
+                                            borderRadius: '12px',
+                                            fontWeight: '600',
+                                            background: todo.priority === 3 ? '#fef2f2' :
+                                                todo.priority === 2 ? '#fefce8' : '#f0fdf4',
+                                            color: getPriorityColor(todo.priority)
+                                        }}>
+                      {getPriorityLabel(todo.priority)}
+                    </span>
+                                    </div>
+
+                                    {/* 설명 */}
+                                    <p style={{
+                                        fontSize: '1rem',
+                                        color: 'var(--text-secondary)',
+                                        margin: '0 0 1rem 0',
+                                        lineHeight: '1.4',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis'
+                                    }}>
+                                        {todo.description || '설명이 없습니다.'}
+                                        {/* 설명에도 알림 표시 */}
+                                        {todo.isNotificationEnabled && (
+                                            <span
+                                                style={{
+                                                    fontSize: '0.9rem',
+                                                    marginLeft: '0.5rem',
+                                                    opacity: 0.6
+                                                }}
+                                                title="알림이 설정된 할일입니다"
+                                            >
+                        🔔
+                      </span>
+                                        )}
+                                    </p>
+
+                                    {/* 라벨 표시 */}
+                                    {todo.labels && todo.labels.length > 0 && (
+                                        <div style={{
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: '0.5rem',
+                                            marginBottom: '1rem'
+                                        }}>
+                                            {todo.labels.slice(0, 3).map(label => (
+                                                <span
+                                                    key={label.id}
+                                                    style={{
+                                                        fontSize: '0.75rem',
+                                                        padding: '0.2rem 0.6rem',
+                                                        borderRadius: '12px',
+                                                        fontWeight: '500',
+                                                        background: label.color || '#e2e8f0',
+                                                        color: label.color ?
+                                                            (parseInt(label.color.slice(1), 16) > 0x888888 ? '#000' : '#fff')
+                                                            : '#334155'
+                                                    }}
+                                                >
+                          {label.name}
+                        </span>
+                                            ))}
+                                            {todo.labels.length > 3 && (
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    padding: '0.2rem 0.6rem',
+                                                    borderRadius: '12px',
+                                                    fontWeight: '500',
+                                                    background: '#f1f5f9',
+                                                    color: '#64748b'
+                                                }}>
+                          +{todo.labels.length - 3}
+                        </span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* 날짜 정보 */}
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '1rem',
+                                        fontSize: '0.9rem',
+                                        color: 'var(--text-light)'
+                                    }}>
+                                        {todo.startDate && (
+                                            <span>
+                        🚀 {new Date(todo.startDate).toLocaleDateString('ko-KR')}
+                      </span>
+                                        )}
+                                        {todo.dueDate && (
+                                            <span style={{
+                                                color: new Date(todo.dueDate) < new Date() && !todo.completed
+                                                    ? '#dc2626'
+                                                    : 'var(--text-light)'
+                                            }}>
+                        📅 {new Date(todo.dueDate).toLocaleDateString('ko-KR')}
+                                                {new Date(todo.dueDate) < new Date() && !todo.completed && ' (지연)'}
+                      </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default TodoListItems;

@@ -231,16 +231,24 @@ const CalendarPage: React.FC = () => {
             const todoListInfo = todoListsMap.get(todo.todoList);
             const todoListName = todoListInfo ? todoListInfo.name : `TodoList ${todo.todoList}`;
             
-            // 실제 API 응답에서 completed 필드 확인
-            const completedValue = todo.completed !== undefined ? todo.completed : 
-                                 todo.isCompleted !== undefined ? todo.isCompleted : false;
+            // 실제 API 응답에서 completed 필드 확인 (문자열 처리 포함)
+            let completedValue = todo.completed !== undefined ? todo.completed : 
+                               todo.isCompleted !== undefined ? todo.isCompleted : false;
             
-            console.log(`Todo ${todo.id}: completed=${todo.completed}, isCompleted=${todo.isCompleted}, final=${completedValue}`);
+            // 문자열로 온 경우 boolean으로 변환
+            if (typeof completedValue === 'string') {
+              completedValue = completedValue.toLowerCase() === 'true';
+            }
+            
+            // 명시적으로 boolean 변환
+            completedValue = Boolean(completedValue);
+            
+            console.log(`Todo ${todo.id}: completed=${todo.completed}, isCompleted=${todo.isCompleted}, type=${typeof completedValue}, final=${completedValue}`);
             
             return {
               id: todo.id,
               title: todo.title,
-              completed: completedValue,
+              completed: Boolean(completedValue), // 명시적으로 boolean 변환
               priority: getPriorityString(todo.priority),
               todoListId: todo.todoList,
               todoListName: todoListName,
@@ -329,8 +337,52 @@ const CalendarPage: React.FC = () => {
     return isSameDay(date, today);
   };
 
-  // 특정 날짜의 할일 가져오기 (시작일부터 마감일까지의 기간 포함)
+  // 특정 날짜의 할일 가져오기 (시작일부터 마감일까지의 기간 포함) - 완료된 할일 제외
   const getTodosForDate = (date: Date) => {
+    const targetDateStr = formatDate(date);
+    const targetDate = new Date(date);
+    
+    return todoLists.map(list => ({
+      ...list,
+      todos: list.todos
+        .filter(todo => {
+          // 완료된 할일은 캘린더에서 숨김
+          if (todo.completed) {
+            return false;
+          }
+
+          const startDate = new Date(todo.startDate);
+          startDate.setHours(0, 0, 0, 0);
+          
+          // dueDate가 있는 경우: 시작일부터 마감일까지의 기간에 포함되는지 확인
+          if (todo.dueDate) {
+            const dueDate = new Date(todo.dueDate);
+            dueDate.setHours(23, 59, 59, 999); // 마감일 끝까지 포함
+            
+            return targetDate >= startDate && targetDate <= dueDate;
+          } else {
+            // dueDate가 없는 경우: 시작일에만 표시
+            return formatDate(startDate) === targetDateStr;
+          }
+        })
+        .sort((a, b) => {
+          // 우선순위 순으로 정렬 (높은 우선순위가 먼저)
+          const priorityDiff = getPriorityNumber(a.priority) - getPriorityNumber(b.priority);
+          if (priorityDiff !== 0) return priorityDiff;
+          
+          // 우선순위가 같으면 완료되지 않은 것이 먼저
+          if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1;
+          }
+          
+          // 그 외에는 제목 알파벳 순
+          return a.title.localeCompare(b.title);
+        })
+    })).filter(list => list.todos.length > 0);
+  };
+
+  // 선택된 날짜의 모든 할일 가져오기 (완료된 할일 포함)
+  const getAllTodosForDate = (date: Date) => {
     const targetDateStr = formatDate(date);
     const targetDate = new Date(date);
     
@@ -368,7 +420,7 @@ const CalendarPage: React.FC = () => {
     })).filter(list => list.todos.length > 0);
   };
 
-  // 특정 날짜의 우선순위별 할일 개수 및 색상 정보 가져오기
+  // 특정 날짜의 우선순위별 할일 개수 및 색상 정보 가져오기 (완료된 할일 제외)
   const getTodoColorsForDate = (date: Date) => {
     const todosForDate = getTodosForDate(date);
     const priorityColors: { color: string; count: number }[] = [];
@@ -419,9 +471,35 @@ const CalendarPage: React.FC = () => {
   const toggleTodoComplete = async (todoId: number) => {
     if (!userId) return;
 
-    // 이전 상태 백업 (롤백용)
-    const previousTodos = [...allTodos];
-    const previousTodoLists = [...todoLists];
+    // 현재 할일의 상태 찾기
+    const currentTodo = allTodos.find(todo => todo.id === todoId);
+    if (!currentTodo) return;
+    
+    const newCompletedState = !currentTodo.completed;
+    
+    console.log(`🔄 Toggling todo ${todoId}: ${currentTodo.completed} -> ${newCompletedState}`);
+
+    // 낙관적 업데이트 (UI 즉시 반영)
+    setAllTodos(prev => 
+      prev.map(todo => 
+        todo.id === todoId ? { 
+          ...todo, 
+          completed: newCompletedState
+        } : todo
+      )
+    );
+    
+    setTodoLists(prev => 
+      prev.map(list => ({
+        ...list,
+        todos: list.todos.map(todo => 
+          todo.id === todoId ? { 
+            ...todo, 
+            completed: newCompletedState
+          } : todo
+        )
+      }))
+    );
 
     try {
       const apiPath = `http://localhost:8080/api/todo/${todoId}/complete`;
@@ -440,32 +518,68 @@ const CalendarPage: React.FC = () => {
         const result = await response.json();
         console.log(`✅ Todo complete SUCCESS:`, result);
         
+        // API 응답으로 최종 상태 확인 및 동기화
         if (result.data) {
           const updatedTodo = result.data;
-          const newCompletedState = updatedTodo.completed;
+          let finalCompletedState = updatedTodo.completed;
           
-          console.log(`🎯 Updating todo ${todoId} to completed: ${newCompletedState}`);
+          console.log('API 응답 전체 데이터:', result.data);
+          console.log('API 응답에서 completed 필드들:', {
+            completed: updatedTodo.completed,
+            isCompleted: updatedTodo.isCompleted,
+            is_completed: updatedTodo.is_completed
+          });
           
-          setAllTodos(prev => 
-            prev.map(todo => 
-              todo.id === todoId ? { 
-                ...todo, 
-                completed: newCompletedState
-              } : todo
-            )
-          );
+          // API 응답에서 completed 필드 찾기 (isCompleted 우선 사용)
+          if (updatedTodo.isCompleted !== undefined) {
+            finalCompletedState = updatedTodo.isCompleted;
+          } else if (updatedTodo.completed !== undefined) {
+            finalCompletedState = updatedTodo.completed;
+          } else if (updatedTodo.is_completed !== undefined) {
+            finalCompletedState = updatedTodo.is_completed;
+          } else {
+            // API 응답에 completed 필드가 없으면 낙관적 업데이트 상태 유지
+            console.log('⚠️ API 응답에 completed 필드가 없습니다. 낙관적 업데이트 상태 유지');
+            finalCompletedState = newCompletedState;
+          }
           
-          setTodoLists(prev => 
-            prev.map(list => ({
-              ...list,
-              todos: list.todos.map(todo => 
+          // API 응답의 completed 값이 문자열인 경우 boolean으로 변환
+          if (typeof finalCompletedState === 'string') {
+            finalCompletedState = finalCompletedState.toLowerCase() === 'true';
+          }
+          
+          // 명시적으로 boolean 변환
+          finalCompletedState = Boolean(finalCompletedState);
+          
+          console.log(`🎯 Final state from API: ${finalCompletedState} (type: ${typeof finalCompletedState})`);
+          
+          // 낙관적 업데이트와 API 응답이 다를 경우에만 재동기화
+          if (finalCompletedState !== newCompletedState) {
+            console.log(`⚠️ API response differs from optimistic update. Syncing...`);
+            
+            setAllTodos(prev => 
+              prev.map(todo => 
                 todo.id === todoId ? { 
                   ...todo, 
-                  completed: newCompletedState
+                  completed: finalCompletedState
                 } : todo
               )
-            }))
-          );
+            );
+            
+            setTodoLists(prev => 
+              prev.map(list => ({
+                ...list,
+                todos: list.todos.map(todo => 
+                  todo.id === todoId ? { 
+                    ...todo, 
+                    completed: finalCompletedState
+                  } : todo
+                )
+              }))
+            );
+          } else {
+            console.log(`✅ API response matches optimistic update. No sync needed.`);
+          }
         }
       } else {
         console.log(`❌ Todo complete failed: Status ${response.status}`);
@@ -475,9 +589,27 @@ const CalendarPage: React.FC = () => {
     } catch (error) {
       console.error('❌ Todo 상태 변경 실패:', error);
       
-      // API 실패 시만 이전 상태로 롤백
-      setAllTodos(previousTodos);
-      setTodoLists(previousTodoLists);
+      // API 실패 시 이전 상태로 롤백
+      setAllTodos(prev => 
+        prev.map(todo => 
+          todo.id === todoId ? { 
+            ...todo, 
+            completed: currentTodo.completed
+          } : todo
+        )
+      );
+      
+      setTodoLists(prev => 
+        prev.map(list => ({
+          ...list,
+          todos: list.todos.map(todo => 
+            todo.id === todoId ? { 
+              ...todo, 
+              completed: currentTodo.completed
+            } : todo
+          )
+        }))
+      );
       
       console.warn('⚠️ 할일 상태를 서버에 저장하지 못했습니다. 새로고침 후 다시 시도해주세요.');
     }
@@ -552,7 +684,7 @@ const CalendarPage: React.FC = () => {
     return days;
   };
 
-  const selectedDateTodos = getTodosForDate(selectedDate);
+  const selectedDateTodos = getAllTodosForDate(selectedDate);
 
   // 로딩 상태
   if (loading) {
@@ -674,8 +806,11 @@ const CalendarPage: React.FC = () => {
                           <label className="todo-checkbox">
                             <input
                               type="checkbox"
-                              checked={todo.completed || false}
-                              onChange={() => toggleTodoComplete(todo.id)}
+                              checked={!!todo.completed}
+                              onChange={() => {
+                                console.log(`🔄 Checkbox clicked for todo ${todo.id}, current state: ${todo.completed}`);
+                                toggleTodoComplete(todo.id);
+                              }}
                             />
                             <span className="checkmark"></span>
                           </label>
@@ -1109,8 +1244,8 @@ const CalendarPage: React.FC = () => {
         }
 
         .todo-checkbox .checkmark:after {
-          left: 6px;
-          top: 2px;
+          left: 5px;
+          top: 1px;
           width: 4px;
           height: 8px;
           border: solid white;

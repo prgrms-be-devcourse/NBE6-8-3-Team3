@@ -75,7 +75,7 @@ const TodoDetailView: React.FC<TodoDetailViewProps> = ({
       case 2:
         return { label: '중간', color: '#eab308' };
       case 1:
-        return { label: '낮음', color: '#2563eb' };
+        return { label: '낮음', color: '#16a34a' };
       default:
         return { label: '일반', color: '#6b7280' };
     }
@@ -299,7 +299,7 @@ const TodoDetailView: React.FC<TodoDetailViewProps> = ({
               borderRadius: '20px',
               fontWeight: '600',
               background: todo.priority === 3 ? '#fef2f2' : 
-                        todo.priority === 2 ? '#fefce8' : '#eff6ff',
+                        todo.priority === 2 ? '#fefce8' : '#f0fdf4 ',
               color: priorityInfo.color
             }}>
               {priorityInfo.label}
