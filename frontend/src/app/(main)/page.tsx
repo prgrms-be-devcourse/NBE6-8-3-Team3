@@ -111,27 +111,31 @@ export default function MainPage() {
   // 우선순위 관련 함수들
   const getPriorityString = (priority: number): 'high' | 'medium' | 'low' => {
     switch (priority) {
-      case 1: return 'high';
+      case 3: return 'high';
       case 2: return 'medium';
-      case 3: return 'low';
+      case 1: return 'low';
       default: return 'medium';
     }
   };
 
   const getPriorityColor = (priority: 'high' | 'medium' | 'low'): string => {
     switch (priority) {
-      case 'high': return '#dc2626';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#16a34a';
-      default: return '#6b7280';
-    }
+      case 'high':
+          return '#dc2626'; // 높음 - 빨간색
+      case 'medium':
+          return '#eab308'; // 중간 - 노란색
+      case 'low':
+          return '#2563eb'; // 낮음 - 파란색
+      default:
+          return '#6b7280'; // 기본 - 회색
+  }
   };
 
   const getPriorityNumber = (priority: 'high' | 'medium' | 'low'): number => {
     switch (priority) {
-      case 'high': return 1;
+      case 'high': return 3;
       case 'medium': return 2;
-      case 'low': return 3;
+      case 'low': return 1;
       default: return 2;
     }
   };
