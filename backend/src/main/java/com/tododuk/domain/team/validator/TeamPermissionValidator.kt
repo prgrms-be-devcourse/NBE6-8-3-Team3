@@ -15,7 +15,7 @@ class TeamPermissionValidator(
      */
     fun validateTeamMember(teamId: Int, userId: Int, errorMessage: String = "해당 팀의 멤버가 아닙니다.") {
         if (!teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, userId)) {
-            throw ServiceException("403-FORBIDDEN", errorMessage)
+            throw ServiceException("403-NO_PERMISSION", errorMessage)
         }
     }
 
