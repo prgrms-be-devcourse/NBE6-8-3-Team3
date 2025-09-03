@@ -795,7 +795,6 @@ export default function TodoListPage() {
                     </div>
 
                     <div style={{
-                    <div style={{
                         width: '40%',
                         minWidth: '450px',
                         height: '100%',
