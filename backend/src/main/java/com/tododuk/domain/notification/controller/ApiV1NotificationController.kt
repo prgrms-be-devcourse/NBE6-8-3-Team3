@@ -1,6 +1,7 @@
 package com.tododuk.domain.notification.controller
 
 import com.tododuk.domain.notification.dto.NotificationDto
+import com.tododuk.domain.notification.dto.NotificationResponseDto
 import com.tododuk.domain.notification.service.NotificationService
 import com.tododuk.domain.user.service.UserService
 import com.tododuk.global.rsData.RsData
@@ -12,11 +13,14 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("api/v1/notifications")
+@RequestMapping("/api/notifications")
 @RequiredArgsConstructor
-class ApiV1NotificationController {
-    private val notificationService: NotificationService? = null
-    private val userService: UserService? = null
+@CrossOrigin(origins = ["http://localhost:3000"])
+class ApiV1NotificationController(
+    private val notificationService: NotificationService,
+    private val userService: UserService
+){
+
 
     @JvmRecord
     data class CreateNotificationReqBody(
@@ -31,8 +35,8 @@ class ApiV1NotificationController {
     @Operation(summary = "알림 생성")
     fun createNotification(@RequestBody @Valid createNotificationReqBody: CreateNotificationReqBody): RsData<Any?> {
         // 사용자 조회 (Kotlin 스타일)
-        val user = userService?.findByUserEmail(createNotificationReqBody.userEmail)
-            ?.orElseThrow { IllegalArgumentException("User not found with email") }!!
+        val user = userService.findByUserEmail(createNotificationReqBody.userEmail)
+            .orElseThrow { IllegalArgumentException("User not found with email") }
 
         // 알림 생성
         val notificationDto = notificationService?.createNotification(
@@ -87,39 +91,46 @@ class ApiV1NotificationController {
             return RsData<NotificationDto?>("400-1", "알림이 존재하지 않습니다.")
         }
     }
-
     @PutMapping("/setStatus/{id}")
     @Transactional
     @Operation(summary = "알림 상태 변경")
-    fun updateNotificationStatus(@PathVariable id: Int): RsData<NotificationDto?> {
-
-        val notification: NotificationDto = notificationService!!.updateNotificationStatus(id)
-        if (notification == null) {
-            return RsData<NotificationDto?>("400-1", "알림 상태 변경 실패")
+    fun updateNotificationStatus(@PathVariable id: Int): RsData<NotificationResponseDto?> {
+        return try {
+            val notification = notificationService.updateNotificationStatus(id)
+            RsData("200-1", "알림 상태가 변경되었습니다.", notification)
+        } catch (e: IllegalArgumentException) {
+            RsData("404-1", "알림을 찾을 수 없습니다.", null)
+        } catch (e: Exception) {
+            RsData("500-1", "알림 상태 변경 실패: ${e.message}", null)
         }
-        return RsData<NotificationDto?>("200-1", "알림 상태가 변경되었습니다.", notification)
     }
 
-
-    // 옵션 4: Spring Security의 Authentication 사용 (권장)
-    @GetMapping("/me")
+    @GetMapping("/notime")
     @Transactional
     @Operation(summary = "내 알림 조회")
-    fun getNotificationByAuth(authentication: Authentication?): RsData<List<NotificationDto?>?> {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return RsData<List<NotificationDto?>?>("401-1", "인증이 필요합니다.")
+    fun getNotificationByAuth(authentication: Authentication?): RsData<List<NotificationResponseDto>?> {
+        return try {
+            if (authentication == null) {
+                return RsData("401-1", "인증이 필요합니다.", null)
+            }
+
+            val username = authentication.name
+            val userOptional = userService.findByUserEmail(username)
+
+            if (!userOptional.isPresent) {
+                return RsData("404-1", "사용자를 찾을 수 없습니다.", null)
+            }
+
+            val user = userOptional.get()
+            val notifications = notificationService.getNotificationsByUserId(user.id)
+
+            RsData("200-1", "알림 조회 성공", notifications)
+
+        } catch (e: Exception) {
+            println("알림 조회 중 오류 발생: ${e.message}")
+            e.printStackTrace()
+            RsData("500-1", "서버 오류: ${e.message}", null)
         }
-
-        // 현재 인증된 사용자 정보 가져오기
-        val username = authentication.getName()
-        println("Authenticated Username: " + username)
-        val user = userService!!.findByUserEmail(username)
-
-        val notifications: List<NotificationDto?> = notificationService!!.getNotificationsByUserId(1)
-        if (notifications.isEmpty()) {
-            return RsData<List<NotificationDto?>?>("404-1", "알림이 존재하지 않습니다.")
-        }
-
-        return RsData<List<NotificationDto?>?>("200-1", "알림이 조회되었습니다.", notifications)
     }
+
 }
