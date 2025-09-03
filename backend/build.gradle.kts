@@ -60,6 +60,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
 
+    // WebPushApi 의존성
+    implementation("nl.martijndwars:web-push:5.1.1")
+    implementation("com.google.code.gson:gson:2.10.1") // JSON 직렬화
+    implementation("org.bouncycastle:bcprov-jdk15on:1.70") // 암호화
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
     // ** Lombok 의존성 유지 **
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

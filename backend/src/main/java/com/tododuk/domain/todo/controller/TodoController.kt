@@ -1,5 +1,6 @@
 package com.tododuk.domain.todo.controller
 
+import com.tododuk.domain.reminder.service.ReminderService
 import com.tododuk.domain.todo.dto.TodoReqDto
 import com.tododuk.domain.todo.dto.TodoResponseDto
 import com.tododuk.domain.todo.entity.Todo
@@ -30,7 +31,8 @@ class TodoController (
     private val todoService: TodoService,
     private val userService: UserService,
     private val todoListService: TodoListService,
-    private val todoLabelService: TodoLabelService
+    private val todoLabelService: TodoLabelService,
+    private val reminderService: ReminderService
 ) {
 
     @GetMapping
@@ -56,6 +58,7 @@ class TodoController (
         @Valid @RequestBody reqDto: TodoReqDto
     ): ResponseEntity<RsData<TodoResponseDto>> {
         val saveTodo: Todo = todoService.addTodo(reqDto)
+        reminderService.createReminder(saveTodo.id, saveTodo.dueDate!!.minusMinutes(5), saveTodo.title!!)
         return ResponseEntity.ok(success("새로운 todo 생성 성공", TodoResponseDto.from(saveTodo)))
     }
 

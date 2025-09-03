@@ -27,20 +27,20 @@ class ReminderService(
 
 ) {
     fun createReminder(todoId: Int, remindDateTime: LocalDateTime, method: String): Reminder {
-        val todo = todoService!!.getTodoById(todoId)
-        val reminder = Reminder(todo, remindDateTime, method)
-        reminderRepository!!.save<Reminder?>(reminder)
+
+        val reminder = Reminder(todoId, remindDateTime, method)
+        reminderRepository.save<Reminder?>(reminder)
         scheduleReminderJob(reminder)
         return reminder
     }
 
 
     fun findById(id: Int): Reminder? {
-        return reminderRepository!!.findById(id).orElse(null)
+        return reminderRepository.findById(id).orElse(null)
     }
 
     fun deleteReminder(id: Int): RsData<Void?> {
-        reminderRepository!!.deleteById(id)
+        reminderRepository.deleteById(id)
         return RsData<Void?>("200-1", "Reminder deleted successfully")
     }
 
@@ -104,7 +104,7 @@ class ReminderService(
                 .startAt(Date.from(reminder.remindAt.atZone(ZoneId.systemDefault()).toInstant()))
                 .build()
 
-            scheduler!!.scheduleJob(jobDetail, trigger)
+            scheduler.scheduleJob(jobDetail, trigger)
         } catch (e: SchedulerException) {
             throw RuntimeException("Failed to schedule job", e)
         }

@@ -15,8 +15,11 @@ import java.time.LocalDateTime
 @RequestMapping("api/v1/reminders")
 @RequiredArgsConstructor
 @Tag(name = "ApiV1ReminderController", description = "API 리마인더 컨트롤러")
-class ApiV1ReminderController {
-    private val reminderService: ReminderService? = null
+class ApiV1ReminderController(
+    private val reminderService: ReminderService
+) {
+
+
 
     @JvmRecord
     data class ReminderReqBody(
@@ -32,7 +35,7 @@ class ApiV1ReminderController {
         @RequestBody remCreRqBody: @Valid ReminderReqBody
     ): RsData<ReminderDto?> {
         val reminder =
-            reminderService!!.createReminder(remCreRqBody.todoId, remCreRqBody.remindDateTime!!, remCreRqBody.method!!)
+            reminderService.createReminder(remCreRqBody.todoId, remCreRqBody.remindDateTime!!, remCreRqBody.method!!)
 
         return RsData<ReminderDto?>("201-1", "리마인더가 생성되었습니다.", ReminderDto(reminder))
     }
@@ -44,7 +47,7 @@ class ApiV1ReminderController {
     fun deleteReminder(
         @PathVariable id: Int
     ): RsData<Void?> {
-        return reminderService!!.deleteReminder(id)
+        return reminderService.deleteReminder(id)
     }
 
     // 단일 리마인더 조회
@@ -52,7 +55,7 @@ class ApiV1ReminderController {
     @Transactional
     @Operation(summary = "리마인더 단건 조회")
     fun getReminderById(@PathVariable id: Int): RsData<ReminderDto?> {
-        return reminderService!!.getReminderById(id) // RsData<ReminderDto> 반환
+        return reminderService.getReminderById(id) // RsData<ReminderDto> 반환
     }
 
     @get:Operation(summary = "리마인더 전체 조회")
@@ -60,5 +63,5 @@ class ApiV1ReminderController {
     @get:GetMapping
     val reminders: RsData<MutableList<ReminderDto?>?>
         // 전체 리마인더 리스트 조회
-        get() = reminderService!!.getReminder() // RsData<List<ReminderDto>> 반환
+        get() = reminderService.getReminder() // RsData<List<ReminderDto>> 반환
 }

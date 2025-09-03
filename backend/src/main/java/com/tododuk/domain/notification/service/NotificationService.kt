@@ -1,9 +1,11 @@
 package com.tododuk.domain.notification.service
 
 import com.tododuk.domain.notification.dto.NotificationDto
+import com.tododuk.domain.notification.dto.NotificationResponseDto
 import com.tododuk.domain.notification.entity.Notification
 import com.tododuk.domain.notification.repository.NotificationRepository
 import com.tododuk.domain.reminder.service.ReminderService
+import com.tododuk.domain.todo.service.TodoService
 import com.tododuk.domain.user.entity.User
 import com.tododuk.domain.user.service.UserService
 import org.springframework.stereotype.Service
@@ -12,7 +14,8 @@ import org.springframework.stereotype.Service
 class NotificationService(
     val notificationRepository: NotificationRepository,
     val reminderService: ReminderService,
-    val userService: UserService
+    val userService: UserService,
+    val todoService: TodoService
 ) {
 
     fun createNotification(user: User, title: String, description: String, url: String): NotificationDto {
@@ -54,32 +57,34 @@ class NotificationService(
         val reminder = reminderService.findById(reminderId)
             ?: throw IllegalArgumentException("Reminder not found with id $reminderId")
 
-        val userId = 1 // TODO: reminder와 연동된 userId 사용
+        val userId = todoService.getTodoById(reminder.todoId!!).todoList!!.user.id
         val user: User = userService.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found with id $userId") }!!
 
         val title = "Reminder: ${reminder.method ?: "No Title"}"
         val description = "Your reminder is scheduled for ${reminder.remindAt}."
-        val url = "/reminders/${reminder.id}"
+        val todoListId = todoService.getTodoById(reminder.todoId!!).todoList!!.id
+        val url = "/todoList/${todoListId}"
 
         return createNotification(user, title, description, url)
     }
 
-    fun updateNotificationStatus(notificationId : Int): NotificationDto {
+    fun updateNotificationStatus(notificationId: Int): NotificationResponseDto {
         val existingNotification = notificationRepository.findById(notificationId)
-            .orElseThrow { IllegalArgumentException("Notification not found with id: ${notificationId}") }
+            .orElseThrow { IllegalArgumentException("Notification not found with id: $notificationId") }
 
-        if (existingNotification.isRead) {
+        // 읽지 않은 상태인 경우에만 읽음으로 변경
+        if (!existingNotification.isRead) {
             existingNotification.markAsRead()
         }
 
         val updatedNotification = notificationRepository.save(existingNotification)
-        return NotificationDto(updatedNotification) // DTO로 반환
+        return NotificationResponseDto.from(updatedNotification) // ResponseDto로 반환
     }
 
-    fun getNotificationsByUserId(userId: Int): List<NotificationDto> {
+    fun getNotificationsByUserId(userId: Int): List<NotificationResponseDto> {
         return notificationRepository.findByUserId(userId)
-            .map { NotificationDto(it) }
+            .map { NotificationResponseDto.from(it) }
+    }
     }
 
-}
