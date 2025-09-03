@@ -10,6 +10,8 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.util.*
 
 @Entity
@@ -139,4 +141,18 @@ open class User : BaseEntity {
             return User(userEmail, password, nickName, isAdmin, profileImgUrl, apiKey)
         }
     }
+    val authoritiesAsStringList: List<String>
+        get() {
+            val authorities = mutableListOf<String>()
+
+            if (isAdmin) authorities.add("ROLE_ADMIN")
+
+            return authorities
+        }
+    fun modify(nickName: String, profileImgUrl: String?) {
+        this.nickName = nickName
+        this.profileImgUrl = profileImgUrl ?: ""
+    }
+    val authorities: Collection<GrantedAuthority>
+        get() = authoritiesAsStringList.map { SimpleGrantedAuthority(it) }
 }

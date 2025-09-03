@@ -20,7 +20,8 @@ class TodoResponseDto private constructor(
     val dueDate: LocalDateTime? = null,
     val todoList : Int = 0,
     val createdAt: LocalDateTime,
-    val updatedAt: LocalDateTime? = null
+    val updatedAt: LocalDateTime? = null,
+    val reminderRequired : Boolean = false
 ){
     companion object {
         fun from(todo: Todo): TodoResponseDto {
@@ -34,7 +35,8 @@ class TodoResponseDto private constructor(
                 dueDate = todo.dueDate,
                 todoList = todo.todoList?.id ?:0,
                 createdAt = todo.createDate,
-                updatedAt = todo.modifyDate
+                updatedAt = todo.modifyDate,
+                reminderRequired = false
             )
         }
     }

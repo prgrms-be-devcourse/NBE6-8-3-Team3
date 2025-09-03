@@ -1,12 +1,12 @@
 package com.tododuk.global.security
 
+import com.tododuk.global.security.CustomOAuth2AuthorizationRequestResolver
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -14,7 +14,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 class SecurityConfig(
-    private val customAuthenticationFilter: CustomAuthenticationFilter
+    private val customAuthenticationFilter: CustomAuthenticationFilter,
+    private val customOAuth2AuthorizationRequestResolver: CustomOAuth2AuthorizationRequestResolver,
+    private val customOAuth2LoginSuccessHandler: CustomOAuth2LoginSuccessHandler
 ) {
     companion object {
         // 인증 인가 필요 없는 API 경로 목록
@@ -22,7 +24,7 @@ class SecurityConfig(
             "/api/v1/user/login",
             "/api/v1/user/logout",
             "/api/v1/user/register",
-            "oauth2/authorization/kakao"
+            "/oauth2/authorization/kakao"
         )
     }
 
@@ -42,7 +44,7 @@ class SecurityConfig(
     }
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+    fun filterChain(http: HttpSecurity, successHandler: CustomOAuth2LoginSuccessHandler): SecurityFilterChain {
         return http
             // CORS 설정 추가
             .cors { cors -> cors.configurationSource(corsConfigurationSource()) }
@@ -68,7 +70,12 @@ class SecurityConfig(
             }
             // csrf 설정 끔 (rest api에서는 csrf를 사용하지 않음)
             .csrf { csrf -> csrf.disable() }
-            .oauth2Login { oauth2 -> }
+            .oauth2Login { oauth2 ->
+                oauth2.successHandler(customOAuth2LoginSuccessHandler)
+                oauth2.authorizationEndpoint { endpoint ->
+                    endpoint.authorizationRequestResolver(customOAuth2AuthorizationRequestResolver)
+                }
+            }
 
             // Spring Security에서 인증/인가 실패 시 커스텀 JSON 응답 로직
             .addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
