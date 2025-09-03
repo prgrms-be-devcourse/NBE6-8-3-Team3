@@ -6,9 +6,9 @@ import com.tododuk.global.security.SecurityUser
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
+import java.io.IOException
 
 @Component
 class Rq(
@@ -28,6 +28,12 @@ class Rq(
             ?.let { it as SecurityUser }
             ?.let { User(it.id, it.email) }
     }
+
+    fun getActorFromDb(): User? {
+        val actor = getActor() ?: return null
+        return userService.findById(actor.id).get()
+    }
+
     //로그인 사용자의 id만 반환하는 방식
     fun getActorId(): Int? {
         return (SecurityContextHolder.getContext().authentication?.principal as? SecurityUser)?.id
@@ -72,5 +78,10 @@ class Rq(
     // apiKey가 삭제되는 쿠키 생성
     fun deleteCookie(name: String) {
         setCookie(name, null)
+    }
+
+    @Throws(IOException::class)
+    fun sendRedirect(url: String) {
+        resp.sendRedirect(url)
     }
 }
