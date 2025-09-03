@@ -384,8 +384,8 @@ export default function TodoListPage() {
         setShowEditForm(false);
         setSelectedTodo(null);
         const now = new Date();
-        const today = now.toISOString().slice(0, 16);
-        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+        const today = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 16);
+        const tomorrow = new Date(now.getTime() + 33 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
         setNewTodo({
             title: '',
@@ -793,6 +793,8 @@ export default function TodoListPage() {
                             onCreateTodo={handleCreateTodo}
                         />
                     </div>
+
+                    <div style={{
                     <div style={{
                         width: '40%',
                         minWidth: '450px',

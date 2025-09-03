@@ -1963,9 +1963,9 @@ const TeamDetailPage: React.FC = () => {
                                 borderRadius: '12px',
                                 fontWeight: '600',
                                 background: todo.priority === 3 ? '#fef2f2' : 
-                                          todo.priority === 2 ? '#fefce8' : '#eff6ff',
+                                          todo.priority === 2 ? '#fefce8' : '#f0fdf4',
                                 color: todo.priority === 3 ? '#dc2626' : 
-                                       todo.priority === 2 ? '#eab308' : '#2563eb'
+                                       todo.priority === 2 ? '#eab308' : '#16a34a'
                               }}>
                                 {getPriorityString(todo.priority)}
                               </span>
@@ -2165,9 +2165,9 @@ const TeamDetailPage: React.FC = () => {
                       borderRadius: '20px',
                       fontWeight: '600',
                       background: selectedTodo.priority === 3 ? '#fef2f2' : 
-                                selectedTodo.priority === 2 ? '#fefce8' : '#eff6ff',
+                                selectedTodo.priority === 2 ? '#fefce8' : '#f0fdf4',
                       color: selectedTodo.priority === 3 ? '#dc2626' : 
-                             selectedTodo.priority === 2 ? '#eab308' : '#2563eb'
+                             selectedTodo.priority === 2 ? '#eab308' : '#16a34a'
                     }}>
                       {getPriorityString(selectedTodo.priority)}
                     </span>

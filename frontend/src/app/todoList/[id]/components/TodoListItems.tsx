@@ -37,17 +37,17 @@ const TodoListItems: React.FC<TodoListItemsProps> = ({
                                                          onCreateTodo
                                                      }) => {
     const getPriorityColor = (priority: number) => {
-        switch (priority) {
-            case 3:
-                return '#dc2626'; // 높음 - 빨간색
-            case 2:
-                return '#eab308'; // 중간 - 노란색
-            case 1:
-                return '#2563eb'; // 낮음 - 파란색
-            default:
-                return '#6b7280'; // 기본 - 회색
-        }
-    };
+    switch (priority) {
+        case 3:
+            return '#dc2626'; // 높음 - 빨간색
+        case 2:
+            return '#eab308'; // 중간 - 노란색
+        case 1:
+            return '#16a34a'; // 낮음 - 초록색
+        default:
+            return '#6b7280'; // 기본 - 회색
+    }
+};
 
     const getPriorityLabel = (priority: number) => {
         switch (priority) {
@@ -223,7 +223,7 @@ const TodoListItems: React.FC<TodoListItemsProps> = ({
                                             borderRadius: '12px',
                                             fontWeight: '600',
                                             background: todo.priority === 3 ? '#fef2f2' :
-                                                todo.priority === 2 ? '#fefce8' : '#eff6ff',
+                                                todo.priority === 2 ? '#fefce8' : '#f0fdf4',
                                             color: getPriorityColor(todo.priority)
                                         }}>
                       {getPriorityLabel(todo.priority)}

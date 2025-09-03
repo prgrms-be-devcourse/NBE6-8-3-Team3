@@ -164,7 +164,7 @@ export default function TodoPage() {
       case 'medium':
         return { label: '중간', color: 'bg-yellow-100 text-yellow-600' };
       case 'low':
-        return { label: '낮음', color: 'bg-blue-100 text-blue-600' };
+        return { label: '낮음', color: 'bg-green-100 text-green-600' };
       default:
         return { label: '일반', color: 'bg-gray-100 text-gray-600' };
     }
@@ -298,7 +298,7 @@ export default function TodoPage() {
                     borderLeft: `4px solid ${
                       todo.priority === 'high' ? '#dc2626' : 
                       todo.priority === 'medium' ? '#eab308' : 
-                      '#2563eb'
+                      '#f0fdf4 '
                     }`,
                     border: selectedTodo?.id === todo.id 
                       ? '2px solid var(--primary-color)' 
@@ -379,9 +379,9 @@ export default function TodoPage() {
                           borderRadius: '12px',
                           fontWeight: '600',
                           background: todo.priority === 'high' ? '#fef2f2' : 
-                                    todo.priority === 'medium' ? '#fefce8' : '#eff6ff',
+                                    todo.priority === 'medium' ? '#fefce8' : '#f0fdf4',
                           color: todo.priority === 'high' ? '#dc2626' : 
-                                 todo.priority === 'medium' ? '#eab308' : '#2563eb'
+                                 todo.priority === 'medium' ? '#eab308' : '#16a34a'
                         }}>
                           {getPriorityLabel(todo.priority).label}
                         </span>
@@ -571,9 +571,9 @@ export default function TodoPage() {
                       borderRadius: '20px',
                       fontWeight: '600',
                       background: selectedTodo.priority === 'high' ? '#fef2f2' : 
-                                selectedTodo.priority === 'medium' ? '#fefce8' : '#eff6ff',
+                                selectedTodo.priority === 'medium' ? '#fefce8' : '#f0fdf4',
                       color: selectedTodo.priority === 'high' ? '#dc2626' : 
-                             selectedTodo.priority === 'medium' ? '#eab308' : '#2563eb'
+                             selectedTodo.priority === 'medium' ? '#eab308' : '#16a34a'
                     }}>
                       {getPriorityLabel(selectedTodo.priority).label}
                     </span>
