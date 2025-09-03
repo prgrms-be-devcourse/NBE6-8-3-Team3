@@ -485,8 +485,8 @@ const LoginPage = () => {
         <div className="mt-4 flex flex-col gap-2">
           <>
             <a
-              href="http://localhost:8080/oauth2/authorization/kakao"
-              className="p-2 rounded hover:bg-gray-100 text-center"
+              href="http://localhost:8080/oauth2/authorization/kakao?redirectUrl=http://localhost:3000"
+              className="p-2 rounded bg-yellow-400 text-black text-center hover:bg-yellow-500"
             >
               카카오 로그인
             </a>
