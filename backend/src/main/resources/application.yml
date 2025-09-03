@@ -47,3 +47,7 @@ custom:
     secretKey: ${JWT_SECRET_KEY}
   accessToken:
     expirationSeconds: "#{60*60*24}"
+push:
+  vapid:
+    publicKey: 'BFRV6aGPQG4sFZbQaXcU4z1FpHGsbhMnC5KfSZSJKOA3irDOXJxLKsskeVO8fptRZgAfo9V2c-1bgjqp8yw373s'
+    privateKey: '2RH-wiOHKbuoY0gAD775bOoXmnbsSTrpgVkQzGvBh9c'

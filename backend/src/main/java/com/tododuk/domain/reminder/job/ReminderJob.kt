@@ -1,6 +1,7 @@
 package com.tododuk.domain.reminder.job
 
 import com.tododuk.domain.notification.service.NotificationService
+import com.tododuk.domain.notification.service.WebPushNotificationService
 import org.quartz.Job
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
@@ -8,7 +9,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class ReminderJob(
-    val notificationService: NotificationService
+    val notificationService: NotificationService,
+    val webPushNotificationService: WebPushNotificationService
 ) : Job {
 
 
@@ -19,6 +21,7 @@ class ReminderJob(
             println("ReminderJob executed for reminderId: " + reminderId)
 
             notificationService.createNotificationByReminder(reminderId)
+            webPushNotificationService.sendWebPushNotificationByReminder(reminderId)
         } catch (e: Exception) {
             System.err.println("ReminderJob 실행 중 예외 발생:")
             e.printStackTrace() // 콘솔에 자세한 에러 출력
