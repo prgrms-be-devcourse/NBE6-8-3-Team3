@@ -1007,9 +1007,9 @@ const TeamDetailPage: React.FC = () => {
   // 우선순위 문자열 변환
   const getPriorityString = (priority: number): string => {
     switch (priority) {
-      case 1: return '높음';
+      case 1: return '낮음';
       case 2: return '보통';
-      case 3: return '낮음';
+      case 3: return '높음';
       default: return '보통';
     }
   };
@@ -1017,9 +1017,9 @@ const TeamDetailPage: React.FC = () => {
   // 우선순위 색상
   const getPriorityColor = (priority: number): string => {
     switch (priority) {
-      case 1: return 'bg-red-100 text-red-800';
+      case 3: return 'bg-red-100 text-red-800';
       case 2: return 'bg-yellow-100 text-yellow-800';
-      case 3: return 'bg-green-100 text-green-800';
+      case 1: return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -1884,7 +1884,7 @@ const TeamDetailPage: React.FC = () => {
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
                           borderLeft: `4px solid ${
-                            todo.priority === 1 ? '#dc2626' : 
+                            todo.priority === 3 ? '#dc2626' : 
                             todo.priority === 2 ? '#eab308' : 
                             '#2563eb'
                           }`,
@@ -1962,9 +1962,9 @@ const TeamDetailPage: React.FC = () => {
                                 padding: '0.25rem 0.5rem',
                                 borderRadius: '12px',
                                 fontWeight: '600',
-                                background: todo.priority === 1 ? '#fef2f2' : 
+                                background: todo.priority === 3 ? '#fef2f2' : 
                                           todo.priority === 2 ? '#fefce8' : '#eff6ff',
-                                color: todo.priority === 1 ? '#dc2626' : 
+                                color: todo.priority === 3 ? '#dc2626' : 
                                        todo.priority === 2 ? '#eab308' : '#2563eb'
                               }}>
                                 {getPriorityString(todo.priority)}
@@ -2164,9 +2164,9 @@ const TeamDetailPage: React.FC = () => {
                       padding: '0.5rem 1rem',
                       borderRadius: '20px',
                       fontWeight: '600',
-                      background: selectedTodo.priority === 1 ? '#fef2f2' : 
+                      background: selectedTodo.priority === 3 ? '#fef2f2' : 
                                 selectedTodo.priority === 2 ? '#fefce8' : '#eff6ff',
-                      color: selectedTodo.priority === 1 ? '#dc2626' : 
+                      color: selectedTodo.priority === 3 ? '#dc2626' : 
                              selectedTodo.priority === 2 ? '#eab308' : '#2563eb'
                     }}>
                       {getPriorityString(selectedTodo.priority)}
