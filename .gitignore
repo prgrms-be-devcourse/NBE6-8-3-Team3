@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /db_dev.mv.db
 
 # Dependencies
@@ -54,3 +55,11 @@ temp/
 # API test files
 *.http
 api-test.http
+=======
+.terraform
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+secrets.tf
+>>>>>>> 5d3cee2 (initial commit after .git removal)

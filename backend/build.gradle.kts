@@ -74,6 +74,10 @@ dependencies {
 
     // 데이터베이스 드라이버
     runtimeOnly("com.h2database:h2")
+<<<<<<< HEAD
+=======
+    runtimeOnly("com.mysql:mysql-connector-j")
+>>>>>>> 5d3cee2 (initial commit after .git removal)
 
     // 테스트 의존성
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -83,6 +87,14 @@ dependencies {
     // **테스트 코드를 위한 롬복 추가**
     testCompileOnly("org.projectlombok:lombok")
     testAnnotationProcessor("org.projectlombok:lombok")
+<<<<<<< HEAD
+=======
+
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.session:spring-session-data-redis")
+>>>>>>> 5d3cee2 (initial commit after .git removal)
 }
 
 tasks.withType<Test> {
