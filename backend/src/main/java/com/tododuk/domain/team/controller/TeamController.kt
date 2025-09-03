@@ -21,65 +21,8 @@ class TeamController(
     private val userRepository: UserRepository
 ) {
 
-    // 인증 확인 헬퍼 메서드
-    private fun getAuthenticatedUser(): User {
-        val actor = rq.getActor()
-        if (actor == null) {
-            // 로그인은 성공했지만 쿠키가 제대로 설정되지 않은 경우를 위한 처리
-            println("인증 실패: actor가 null입니다. 쿠키 확인 필요")
+    // ===== 팀 기본 CRUD =====
 
-            // 임시로 테스트 사용자 생성 (실제 프로덕션에서는 제거)
-            try {
-                // 테스트용 사용자가 없으면 생성
-                val existingUser = userRepository.findByUserEmail("dev@test.com")
-                if (existingUser.isEmpty) {
-                    val testUser = User.builder()
-                        .nickName("김개발")
-                        .userEmail("dev@test.com")
-                        .password("password123")
-                        .build()
-                    userRepository.save(testUser)
-                    println("테스트 사용자 생성됨: dev@test.com")
-
-                    // 생성 후 다시 조회
-                    val actor = userRepository.findByUserEmail("dev@test.com").orElse(null)
-                    if (actor != null) {
-                        println("생성된 사용자로 인증 성공: ${actor.userEmail}")
-                        return actor
-                    }
-                } else {
-                    println("기존 사용자 발견: ${existingUser.get().userEmail}")
-                    return existingUser.get()
-                }
-
-                // 다른 테스트 사용자들도 생성
-                val testEmails = arrayOf("coding@test.com", "server@test.com", "daran2@gmail.com")
-                val testNames = arrayOf("이코딩", "박서버", "다란")
-
-                for (i in testEmails.indices) {
-                    val existingTestUser = userRepository.findByUserEmail(testEmails[i])
-                    if (existingTestUser.isEmpty) {
-                        val testUser = User.builder()
-                            .nickName(testNames[i])
-                            .userEmail(testEmails[i])
-                            .password("password123")
-                            .build()
-                        userRepository.save(testUser)
-                        println("테스트 사용자 생성됨: ${testEmails[i]}")
-                    }
-                }
-
-            } catch (e: Exception) {
-                println("테스트 사용자 생성 실패: ${e.message}")
-                e.printStackTrace()
-            }
-
-            throw ServiceException("401-1", "로그인이 필요합니다.")
-        }
-        return actor
-    }
-
-    // 1. 팀 생성
     @Operation(
         summary = "팀 생성",
         description = "새로운 팀을 생성하고, 생성자를 해당 팀의 리더로 추가합니다."
@@ -87,10 +30,10 @@ class TeamController(
     @PostMapping
     fun createTeam(@Valid @RequestBody createDto: TeamCreateRequestDto): RsData<TeamResponseDto> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.createTeam(createDto, authenticatedUser.id)
+        val teamResponseDto = teamService.createTeam(createDto, authenticatedUser.id)
+        return RsData.success("팀이 성공적으로 생성되었습니다.", teamResponseDto)
     }
 
-    // 2. 팀 목록 조회
     @Operation(
         summary = "팀 목록 조회",
         description = "모든 팀의 목록을 조회합니다."
@@ -99,17 +42,21 @@ class TeamController(
     fun getTeams(): RsData<List<TeamResponseDto>> {
         val teams = teamService.getAllTeams()
         val teamResponseDtos = teams.map { TeamResponseDto.from(it) }
-        return RsData("200-OK", "팀 목록 조회 성공", teamResponseDtos)
+        return RsData.success("팀 목록 조회 성공", teamResponseDtos)
     }
 
-    // 사용자가 속한 팀 목록만 반환
     @GetMapping("/my")
     fun getMyTeams(): RsData<List<TeamResponseDto>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getMyTeams(authenticatedUser.id)
+        val teamResponseDtos = teamService.getMyTeams(authenticatedUser.id)
+
+        return if (teamResponseDtos.isEmpty()) {
+            RsData.success("속한 팀이 없습니다.", emptyList())
+        } else {
+            RsData.success("팀 목록 조회 성공", teamResponseDtos)
+        }
     }
 
-    // 3. 특정 팀 상세 조회
     @GetMapping("/{teamId}")
     @Operation(
         summary = "특정 팀 상세 조회",
@@ -117,10 +64,10 @@ class TeamController(
     )
     fun getTeamDetails(@PathVariable teamId: Int): RsData<TeamResponseDto> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTeamDetails(teamId, authenticatedUser.id)
+        val teamResponseDto = teamService.getTeamDetails(teamId, authenticatedUser.id)
+        return RsData.success("팀 상세 정보 조회 성공", teamResponseDto)
     }
 
-    // 4. 팀 정보 수정 (PATCH)
     @Operation(
         summary = "리더 - 팀 정보 수정",
         description = "지정된 팀 ID의 정보를 수정합니다. 팀 이름과 설명을 수정할 수 있습니다. (리더만 가능)"
@@ -131,10 +78,10 @@ class TeamController(
         @Valid @RequestBody updateDto: TeamUpdateRequestDto
     ): RsData<TeamResponseDto> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.updateTeamInfo(teamId, updateDto, authenticatedUser.id)
+        val teamResponseDto = teamService.updateTeamInfo(teamId, updateDto, authenticatedUser.id)
+        return RsData.success("팀 정보가 성공적으로 수정되었습니다.", teamResponseDto)
     }
 
-    // 5. 팀 삭제
     @Operation(
         summary = "리더 - 팀 삭제",
         description = "지정된 팀 ID에 해당하는 팀을 삭제합니다. (리더만 가능)"
@@ -142,10 +89,12 @@ class TeamController(
     @DeleteMapping("/{teamId}")
     fun deleteTeam(@PathVariable teamId: Int): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.deleteTeam(teamId, authenticatedUser.id)
+        teamService.deleteTeam(teamId, authenticatedUser.id)
+        return RsData.success("팀이 성공적으로 삭제되었습니다.")
     }
 
-    // 6. 팀 할일 목록 조회
+    // ===== 팀 할일 관리 =====
+
     @GetMapping("/{teamId}/todos")
     @Operation(
         summary = "할일 목록 조회",
@@ -153,10 +102,10 @@ class TeamController(
     )
     fun getTeamTodos(@PathVariable teamId: Int): RsData<List<Map<String, Any?>>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTeamTodos(teamId, authenticatedUser.id)
+        val todos = teamService.getTeamTodos(teamId, authenticatedUser.id)
+        return RsData.success("할일 목록 조회 성공", todos)
     }
 
-    // 7. 팀 할일 추가
     @PostMapping("/{teamId}/todos")
     @Operation(
         summary = "할일 추가",
@@ -167,10 +116,10 @@ class TeamController(
         @RequestBody todoRequest: Map<String, Any?>
     ): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.addTeamTodo(teamId, authenticatedUser.id, todoRequest)
+        val newTodo = teamService.addTeamTodo(teamId, authenticatedUser.id, todoRequest)
+        return RsData.success("할일 추가 성공", newTodo)
     }
 
-    // 팀별 할일 목록 조회
     @GetMapping("/{teamId}/todo-lists")
     @Operation(
         summary = "팀 할일 목록 조회",
@@ -178,10 +127,10 @@ class TeamController(
     )
     fun getTeamTodoLists(@PathVariable teamId: Int): RsData<List<Map<String, Any?>>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTeamTodoLists(teamId, authenticatedUser.id)
+        val todoLists = teamService.getTeamTodoLists(teamId, authenticatedUser.id)
+        return RsData.success("팀 할일 목록 조회 성공", todoLists)
     }
 
-    // 팀 할일 목록 생성
     @PostMapping("/{teamId}/todo-lists")
     @Operation(
         summary = "팀 할일 목록 생성",
@@ -192,10 +141,10 @@ class TeamController(
         @RequestBody todoListRequest: Map<String, Any?>
     ): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.createTeamTodoList(teamId, todoListRequest, authenticatedUser.id)
+        val todoList = teamService.createTeamTodoList(teamId, todoListRequest, authenticatedUser.id)
+        return RsData.success("할일 목록이 성공적으로 생성되었습니다.", todoList)
     }
 
-    // 팀 할일 목록 수정
     @PutMapping("/{teamId}/todo-lists/{todoListId}")
     @Operation(
         summary = "팀 할일 목록 수정",
@@ -207,10 +156,10 @@ class TeamController(
         @RequestBody todoListRequest: Map<String, Any?>
     ): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.updateTeamTodoList(teamId, todoListId, todoListRequest, authenticatedUser.id)
+        val updatedTodoList = teamService.updateTeamTodoList(teamId, todoListId, todoListRequest, authenticatedUser.id)
+        return RsData.success("할일 목록이 성공적으로 수정되었습니다.", updatedTodoList)
     }
 
-    // 팀 할일 목록 삭제
     @DeleteMapping("/{teamId}/todo-lists/{todoListId}")
     @Operation(
         summary = "팀 할일 목록 삭제",
@@ -221,10 +170,10 @@ class TeamController(
         @PathVariable todoListId: Int
     ): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.deleteTeamTodoList(teamId, todoListId, authenticatedUser.id)
+        teamService.deleteTeamTodoList(teamId, todoListId, authenticatedUser.id)
+        return RsData.success("할일 목록이 성공적으로 삭제되었습니다.")
     }
 
-    // 팀 할일 목록별 할일 조회
     @GetMapping("/{teamId}/todo-lists/{todoListId}/todos")
     @Operation(
         summary = "팀 할일 목록별 할일 조회",
@@ -235,10 +184,10 @@ class TeamController(
         @PathVariable todoListId: Int
     ): RsData<List<Map<String, Any?>>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTeamTodosByList(teamId, todoListId, authenticatedUser.id)
+        val todos = teamService.getTeamTodosByList(teamId, todoListId, authenticatedUser.id)
+        return RsData.success("할일 목록별 할일 조회 성공", todos)
     }
 
-    // 팀 할일 목록에 할일 추가
     @PostMapping("/{teamId}/todo-lists/{todoListId}/todos")
     @Operation(
         summary = "팀 할일 목록에 할일 추가",
@@ -250,10 +199,10 @@ class TeamController(
         @RequestBody todoRequest: Map<String, Any?>
     ): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.addTodoToTeamList(teamId, todoListId, todoRequest, authenticatedUser.id)
+        val newTodo = teamService.addTodoToTeamList(teamId, todoListId, todoRequest, authenticatedUser.id)
+        return RsData.success("할일이 성공적으로 추가되었습니다.", newTodo)
     }
 
-    // 팀 할일 수정
     @PutMapping("/{teamId}/todos/{todoId}")
     @Operation(
         summary = "팀 할일 수정",
@@ -265,10 +214,10 @@ class TeamController(
         @RequestBody todoRequest: Map<String, Any?>
     ): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.updateTeamTodo(teamId, todoId, todoRequest, authenticatedUser.id)
+        val updatedTodo = teamService.updateTeamTodo(teamId, todoId, todoRequest, authenticatedUser.id)
+        return RsData.success("할일이 성공적으로 수정되었습니다.", updatedTodo)
     }
 
-    // 팀 할일 삭제
     @DeleteMapping("/{teamId}/todos/{todoId}")
     @Operation(
         summary = "팀 할일 삭제",
@@ -279,10 +228,10 @@ class TeamController(
         @PathVariable todoId: Int
     ): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.deleteTeamTodo(teamId, todoId, authenticatedUser.id)
+        teamService.deleteTeamTodo(teamId, todoId, authenticatedUser.id)
+        return RsData.success("할일이 성공적으로 삭제되었습니다.")
     }
 
-    // 팀 할일 완료 상태 토글
     @PatchMapping("/{teamId}/todos/{todoId}/toggle")
     @Operation(
         summary = "팀 할일 완료 상태 토글",
@@ -293,7 +242,8 @@ class TeamController(
         @PathVariable todoId: Int
     ): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.toggleTeamTodoComplete(teamId, todoId, authenticatedUser.id)
+        val updatedTodo = teamService.toggleTeamTodoComplete(teamId, todoId, authenticatedUser.id)
+        return RsData.success("할일 완료 상태가 변경되었습니다.", updatedTodo)
     }
 
     // ===== 담당자 관리 API 엔드포인트들 =====
@@ -312,7 +262,8 @@ class TeamController(
         val assignedUserId = assignmentRequest["assignedUserId"] as? Int
             ?: throw ServiceException("400-BAD_REQUEST", "담당자 ID는 필수입니다.")
 
-        return teamService.assignTodoToMember(teamId, todoId, assignedUserId, authenticatedUser.id)
+        val assignment = teamService.assignTodoToMember(teamId, todoId, assignedUserId, authenticatedUser.id)
+        return RsData.success("담당자가 성공적으로 지정되었습니다.", assignment)
     }
 
     @DeleteMapping("/{teamId}/todos/{todoId}/assign")
@@ -325,7 +276,8 @@ class TeamController(
         @PathVariable todoId: Int
     ): RsData<Unit> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.unassignTodo(teamId, todoId, authenticatedUser.id)
+        teamService.unassignTodo(teamId, todoId, authenticatedUser.id)
+        return RsData.success("담당자가 해제되었습니다.")
     }
 
     @GetMapping("/{teamId}/todos/{todoId}/assign")
@@ -338,7 +290,8 @@ class TeamController(
         @PathVariable todoId: Int
     ): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTodoAssignment(teamId, todoId, authenticatedUser.id)
+        val assignment = teamService.getTodoAssignment(teamId, todoId, authenticatedUser.id)
+        return RsData.success("담당자 정보 조회 성공", assignment)
     }
 
     @GetMapping("/{teamId}/assignments")
@@ -348,7 +301,8 @@ class TeamController(
     )
     fun getTeamAssignments(@PathVariable teamId: Int): RsData<List<Map<String, Any?>>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTeamAssignments(teamId, authenticatedUser.id)
+        val assignments = teamService.getTeamAssignments(teamId, authenticatedUser.id)
+        return RsData.success("팀 담당자 기록 조회 성공", assignments)
     }
 
     // ===== 담당자 권한 확인 API 엔드포인트들 =====
@@ -363,7 +317,8 @@ class TeamController(
         @PathVariable todoId: Int
     ): RsData<List<Map<String, Any?>>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTodoAssignees(teamId, todoId, authenticatedUser.id)
+        val assignees = teamService.getTodoAssignees(teamId, todoId, authenticatedUser.id)
+        return RsData.success("담당자 목록 조회 성공", assignees)
     }
 
     @PostMapping("/{teamId}/todos/{todoId}/assignees")
@@ -382,7 +337,8 @@ class TeamController(
         val assignedUserIds = assignmentRequest["assignedUserIds"] as? List<Int>
             ?: throw ServiceException("400-BAD_REQUEST", "담당자 ID 목록은 필수입니다.")
 
-        return teamService.assignMultipleTodoAssignees(teamId, todoId, assignedUserIds, authenticatedUser.id)
+        val assignment = teamService.assignMultipleTodoAssignees(teamId, todoId, assignedUserIds, authenticatedUser.id)
+        return RsData.success("담당자들이 성공적으로 지정되었습니다.", assignment)
     }
 
     @GetMapping("/{teamId}/todos/{todoId}/is-assignee")
@@ -415,6 +371,73 @@ class TeamController(
     )
     fun getTeamStats(@PathVariable teamId: Int): RsData<Map<String, Any?>> {
         val authenticatedUser = getAuthenticatedUser()
-        return teamService.getTeamStats(teamId, authenticatedUser.id)
+        val stats = teamService.getTeamStats(teamId, authenticatedUser.id)
+        return RsData.success("팀 통계 조회 성공", stats)
+    }
+
+    // ===== Private Helper Methods =====
+
+    /**
+     * 인증 확인 헬퍼 메서드 (테스트용 사용자 생성 로직 포함)
+     */
+    private fun getAuthenticatedUser(): User {
+        val actor = rq.getActor()
+        if (actor == null) {
+            // 로그인은 성공했지만 쿠키가 제대로 설정되지 않은 경우를 위한 처리
+            println("인증 실패: actor가 null입니다. 쿠키 확인 필요")
+
+            // 임시로 테스트 사용자 생성 (실제 프로덕션에서는 제거)
+            try {
+                // 테스트용 사용자가 없으면 생성
+                val existingUser = userRepository.findByUserEmail("dev@test.com")
+                if (existingUser.isEmpty) {
+                    val testUser = User.builder()
+                        .nickName("김개발")
+                        .userEmail("dev@test.com")
+                        .password("password123")
+                        .build()
+                    userRepository.save(testUser)
+                    println("테스트 사용자 생성됨: dev@test.com")
+
+                    // 생성 후 다시 조회
+                    val newActor = userRepository.findByUserEmail("dev@test.com").orElse(null)
+                    if (newActor != null) {
+                        println("생성된 사용자로 인증 성공: ${newActor.userEmail}")
+                        return newActor
+                    }
+                } else {
+                    println("기존 사용자 발견: ${existingUser.get().userEmail}")
+                    return existingUser.get()
+                }
+
+                // 다른 테스트 사용자들도 생성
+                createAdditionalTestUsers()
+
+            } catch (e: Exception) {
+                println("테스트 사용자 생성 실패: ${e.message}")
+                e.printStackTrace()
+            }
+
+            throw ServiceException("401-1", "로그인이 필요합니다.")
+        }
+        return actor
+    }
+
+    private fun createAdditionalTestUsers() {
+        val testEmails = arrayOf("coding@test.com", "server@test.com", "daran2@gmail.com")
+        val testNames = arrayOf("이코딩", "박서버", "다란")
+
+        for (i in testEmails.indices) {
+            val existingTestUser = userRepository.findByUserEmail(testEmails[i])
+            if (existingTestUser.isEmpty) {
+                val testUser = User(
+                    email = testEmails[i],
+                    password = "password123",
+                    nickName = testNames[i]
+                )
+                userRepository.save(testUser)
+                println("테스트 사용자 생성됨: ${testEmails[i]}")
+            }
+        }
     }
 }

@@ -6,29 +6,29 @@ import com.tododuk.domain.team.dto.TeamMemberResponseDto
 import com.tododuk.domain.team.entity.Team
 import com.tododuk.domain.team.entity.TeamMember
 import com.tododuk.domain.team.repository.TeamMemberRepository
-import com.tododuk.domain.team.repository.TeamRepository
 import com.tododuk.domain.team.repository.TodoAssignmentRepository
+import com.tododuk.domain.team.validator.TeamPermissionValidator
+import com.tododuk.domain.team.validator.TeamValidator
 import com.tododuk.domain.user.entity.User
-import com.tododuk.domain.user.repository.UserRepository
 import com.tododuk.global.exception.ServiceException
-import com.tododuk.global.rsData.RsData
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.stream.Collectors
+import java.time.LocalDateTime
 
 @Service
 @Transactional(readOnly = true)
 class TeamMemberService(
     private val teamMemberRepository: TeamMemberRepository,
-    private val teamRepository: TeamRepository,
-    private val userRepository: UserRepository,
-    private val todoAssignmentRepository: TodoAssignmentRepository
+    private val todoAssignmentRepository: TodoAssignmentRepository,
+    private val teamPermissionValidator: TeamPermissionValidator,
+    private val teamValidator: TeamValidator
 ) {
 
-    // 1. 팀 생성 시 초기 리더 멤버 추가 (TeamService에서 호출)
+    /**
+     * 팀 생성 시 초기 리더 멤버 추가 (TeamService에서 호출)
+     */
     @Transactional
     fun createLeaderMember(team: Team, leaderUser: User): TeamMember {
-        // 새로운 리더 멤버 생성
         val leaderMember = TeamMember.builder()
             .user(leaderUser)
             .team(team)
@@ -39,89 +39,93 @@ class TeamMemberService(
         return teamMemberRepository.save(leaderMember)
     }
 
-    // 2. 특정 팀의 모든 멤버 조회
-    fun getTeamMembers(teamId: Int, requesterUserId: Int): RsData<List<TeamMemberResponseDto>> {
-        if (!teamMemberRepository.existsByTeam_IdAndUser_Id(teamId, requesterUserId)) {
-            throw ServiceException("403-NO_PERMISSION", "해당 팀의 멤버 목록을 조회할 권한이 없습니다.")
-        }
+    /**
+     * 특정 팀의 모든 멤버 조회
+     */
+    fun getTeamMembers(teamId: Int, requesterUserId: Int): List<TeamMemberResponseDto> {
+        teamPermissionValidator.validateTeamMember(teamId, requesterUserId, "해당 팀의 멤버 목록을 조회할 권한이 없습니다.")
 
         val members = teamMemberRepository.findByTeam_Id(teamId)
-        val memberDtos = members.stream()
-            .map { TeamMemberResponseDto.from(it) }
-            .collect(Collectors.toList())
-
-        return RsData.success("팀 멤버 목록 조회 성공", memberDtos)
+        return members.map { TeamMemberResponseDto.from(it) }
     }
 
-    // 3. 팀 멤버 추가 (이메일 기반)
+    /**
+     * 팀 멤버 추가 (이메일 기반)
+     */
     @Transactional
-    fun addTeamMember(teamId: Int, dto: TeamMemberAddRequestDto, inviterUserId: Int): RsData<TeamMemberResponseDto> {
-        if (!teamMemberRepository.existsByTeam_IdAndUser_IdAndRole(teamId, inviterUserId, TeamRoleType.LEADER)) {
-            throw ServiceException("403-NO_PERMISSION", "팀 멤버를 추가할 권한이 없습니다.")
-        }
+    fun addTeamMember(teamId: Int, dto: TeamMemberAddRequestDto, inviterUserId: Int): TeamMemberResponseDto {
+        teamPermissionValidator.validateTeamLeader(teamId, inviterUserId, "팀 멤버를 추가할 권한이 없습니다.")
 
-        val team = teamRepository.findById(teamId)
-            .orElseThrow { ServiceException("404-TEAM_NOT_FOUND", "팀을 찾을 수 없습니다. ID: $teamId") }
+        val team = teamValidator.validateAndGetTeam(teamId)
+        val newMemberUser = teamValidator.validateAndGetUserByEmail(dto.email)
 
-        // 이메일로 사용자 찾기
-        val newMemberUser = userRepository.findByUserEmail(dto.email)
-            .orElseThrow { ServiceException("404-USER_NOT_FOUND", "해당 이메일의 사용자를 찾을 수 없습니다: ${dto.email}") }
+        // 이미 팀 멤버인지 확인
+        teamValidator.validateNotAlreadyMember(team, newMemberUser.userEmail)
 
-        // 이미 팀 멤버인지 확인 (이메일 기반)
-        if (teamMemberRepository.existsByTeam_IdAndUser_UserEmail(teamId, newMemberUser.userEmail)) {
-            throw ServiceException("409-ALREADY_MEMBER", "이미 해당 팀의 멤버입니다. Email: ${newMemberUser.userEmail}")
-        }
+        val teamMember = createTeamMember(team, newMemberUser, dto.role)
+        return TeamMemberResponseDto.from(teamMember)
+    }
 
-        val teamMember = TeamMember.builder()
-            .team(team)
-            .user(newMemberUser)
-            .role(dto.role)
-            .build()
+    /**
+     * 팀 멤버 역할 변경
+     */
+    @Transactional
+    fun updateTeamMemberRole(
+        teamId: Int,
+        userId: Int,
+        newRole: TeamRoleType,
+        requesterUserId: Int
+    ): TeamMemberResponseDto {
+        teamValidator.validateAndGetTeam(teamId)
+        teamPermissionValidator.validateTeamLeader(teamId, requesterUserId, "팀 멤버 역할을 변경할 권한이 없습니다.")
+
+        val teamMember = findTeamMember(teamId, userId)
+        teamMember.updateRole(newRole)
+
+        return TeamMemberResponseDto.from(teamMember)
+    }
+
+    /**
+     * 팀 멤버 삭제
+     */
+    @Transactional
+    fun deleteTeamMember(teamId: Int, memberUserIdToRemove: Int, removerUserId: Int) {
+        teamValidator.validateAndGetTeam(teamId)
+        teamPermissionValidator.validateTeamLeader(teamId, removerUserId, "팀 멤버를 제거할 권한이 없습니다.")
+
+        val teamMember = findTeamMember(teamId, memberUserIdToRemove)
+
+        // 마지막 리더 삭제 방지
+        teamPermissionValidator.validateLeaderRemoval(teamId, memberUserIdToRemove)
+
+        // 해당 멤버의 모든 담당자 정보 삭제
+        cleanupMemberAssignments(teamId, memberUserIdToRemove)
+
+        teamMemberRepository.delete(teamMember)
+    }
+
+    // ===== Private Helper Methods =====
+
+    private fun createTeamMember(team: Team, user: User, role: TeamRoleType): TeamMember {
+        val teamMember = TeamMember(
+            user = user,
+            team = team,
+            role = role,
+            joinedAt = LocalDateTime.now()
+        )
 
         team.addMember(teamMember)
-        teamMemberRepository.save(teamMember)
-
-        return RsData.success("팀 멤버가 성공적으로 추가되었습니다.", TeamMemberResponseDto.from(teamMember))
+        return teamMemberRepository.save(teamMember)
     }
 
-    // 4. 팀 멤버 역할 변경 (이메일 기반)
-    @Transactional
-    fun updateTeamMemberRole(teamId: Int, userId: Int, newRole: TeamRoleType, requesterUserId: Int): RsData<TeamMemberResponseDto> {
-        val team = teamRepository.findById(teamId)
-            .orElseThrow { ServiceException("404-TEAM_NOT_FOUND", "팀을 찾을 수 없습니다. ID: $teamId") }
-
-        if (!teamMemberRepository.existsByTeam_IdAndUser_IdAndRole(teamId, requesterUserId, TeamRoleType.LEADER)) {
-            throw ServiceException("403-NO_PERMISSION", "팀 멤버 역할을 변경할 권한이 없습니다.")
-        }
-
-        val teamMember = teamMemberRepository.findByTeam_IdAndUser_Id(teamId, userId)
-            .orElseThrow { ServiceException("404-MEMBER_NOT_FOUND", "해당 팀의 멤버를 찾을 수 없습니다. User ID: $userId") }
-
-        teamMember.updateRole(newRole)
-        return RsData.success("팀 멤버 역할이 성공적으로 변경되었습니다.", TeamMemberResponseDto.from(teamMember))
-    }
-
-    // 5. 팀 멤버 삭제
-    @Transactional
-    fun deleteTeamMember(teamId: Int, memberUserIdToRemove: Int, removerUserId: Int): RsData<Unit> {
-        val team = teamRepository.findById(teamId)
-            .orElseThrow { ServiceException("404-TEAM_NOT_FOUND", "팀을 찾을 수 없습니다. ID: $teamId") }
-
-        if (!teamMemberRepository.existsByTeam_IdAndUser_IdAndRole(teamId, removerUserId, TeamRoleType.LEADER)) {
-            throw ServiceException("403-NO_PERMISSION", "팀 멤버를 제거할 권한이 없습니다.")
-        }
-
-        val teamMember = teamMemberRepository.findByTeam_IdAndUser_Id(teamId, memberUserIdToRemove)
-            .orElseThrow { ServiceException("404-MEMBER_NOT_FOUND", "해당 팀의 멤버를 찾을 수 없습니다. User ID: $memberUserIdToRemove") }
-
-        if (teamMember.role == TeamRoleType.LEADER) {
-            val leaderCount = teamMemberRepository.countByTeam_IdAndRole(teamId, TeamRoleType.LEADER)
-            if (leaderCount == 1L) {
-                throw ServiceException("409-LAST_LEADER_CANNOT_BE_REMOVED", "팀의 마지막 리더는 제거할 수 없습니다.")
+    private fun findTeamMember(teamId: Int, userId: Int): TeamMember {
+        return teamMemberRepository.findByTeam_IdAndUser_Id(teamId, userId)
+            .orElseThrow {
+                ServiceException("404-MEMBER_NOT_FOUND", "해당 팀의 멤버를 찾을 수 없습니다. User ID: $userId")
             }
-        }
+    }
 
-        // 해당 멤버가 담당자로 지정된 모든 할일의 담당자 정보 삭제
+    private fun cleanupMemberAssignments(teamId: Int, memberUserIdToRemove: Int) {
         println("=== 멤버 제거 시 담당자 정보 삭제 시작 ===")
         println("팀 ID: $teamId, 제거할 멤버 User ID: $memberUserIdToRemove")
 
@@ -131,9 +135,7 @@ class TeamMemberService(
         } catch (e: Exception) {
             println("담당자 정보 삭제 실패: ${e.message}")
             e.printStackTrace()
+            // 담당자 정보 삭제 실패해도 멤버 삭제는 진행
         }
-
-        teamMemberRepository.delete(teamMember)
-        return RsData.success("팀 멤버가 성공적으로 제거되었습니다.")
     }
 }
