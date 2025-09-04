@@ -31,5 +31,6 @@ class WebMvcConfig : WebMvcConfigurer {
 
         // 예: /uploads/profiles/profile_1_1234567890.jpg 요청 시
         // {프로젝트루트}/uploads/profiles/profile_1_1234567890.jpg 파일을 서빙
+
     }
 }

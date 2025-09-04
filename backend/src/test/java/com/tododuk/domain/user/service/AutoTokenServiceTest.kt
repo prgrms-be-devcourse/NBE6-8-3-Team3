@@ -78,7 +78,7 @@ class AutoTokenServiceTest {
     @Test
     @DisplayName("유저 액세스 토큰 생성")
     fun t4() {
-        val user = userService!!.findByUserEmail("usernew@gmail.com").get()
+        val user = userService!!.findByUserEmail("dev@test.com").get()
         val accessToken = authTokenService!!.genAccessToken(user)
         Assertions.assertThat(accessToken).isNotBlank()
 

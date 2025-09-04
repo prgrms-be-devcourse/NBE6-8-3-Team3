@@ -54,3 +54,10 @@ temp/
 # API test files
 *.http
 api-test.http
+.terraform
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+secrets.tf
+
