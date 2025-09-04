@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-spring:
-=======
 server:
   port: 8080
   forward-headers-strategy: native
@@ -9,7 +6,6 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
->>>>>>> 5d3cee2 (initial commit after .git removal)
   application:
     name: tododok
   #.env 파일에서 환경변수 불러오기
@@ -52,10 +48,6 @@ logging:
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
     com.back: DEBUG
-<<<<<<< HEAD
-
-custom:
-=======
 management:
   endpoints:
     web:
@@ -81,7 +73,6 @@ custom:
     frontUrl: "${custom.dev.frontUrl}"
     backUrl: "${custom.dev.backUrl}"
     name: flatcheese(dev)
->>>>>>> 5d3cee2 (initial commit after .git removal)
   jwt:
     secretKey: ${JWT_SECRET_KEY}
   accessToken:

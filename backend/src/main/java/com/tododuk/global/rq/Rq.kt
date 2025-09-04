@@ -2,10 +2,6 @@ package com.tododuk.global.rq
 
 import com.tododuk.domain.user.entity.User
 import com.tododuk.domain.user.service.UserService
-<<<<<<< HEAD
-=======
-import com.tododuk.global.app.AppConfig
->>>>>>> 5d3cee2 (initial commit after .git removal)
 import com.tododuk.global.security.SecurityUser
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
@@ -58,7 +54,6 @@ class Rq(
         }
     }
 
-<<<<<<< HEAD
     fun getCookieValue(name: String, defaultValue: String): String {
         return req.cookies
             ?.firstOrNull { cookie -> cookie.name == name }
@@ -75,23 +70,6 @@ class Rq(
 
         if (value.isNullOrBlank()) {
             cookie.maxAge = 0
-=======
-    fun getCookieValue(name: String, defaultValue: String): String =
-        req.cookies
-            ?.firstOrNull { it.name == name }
-            ?.value
-            ?.takeIf { it.isNotBlank() }
-            ?: defaultValue
-
-    fun setCookie(name: String, value: String?) {
-        val cookie = Cookie(name, value ?: "").apply {
-            path = "/"
-            isHttpOnly = true
-            domain = AppConfig.cookieDomain
-            secure = true
-            setAttribute("SameSite", "Strict")
-            maxAge = if (value.isNullOrBlank()) 0 else 60 * 60 * 24 * 365
->>>>>>> 5d3cee2 (initial commit after .git removal)
         }
 
         resp.addCookie(cookie)

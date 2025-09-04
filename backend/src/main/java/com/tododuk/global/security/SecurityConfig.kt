@@ -1,19 +1,11 @@
 package com.tododuk.global.security
 
-<<<<<<< HEAD
-import com.tododuk.global.security.CustomOAuth2AuthorizationRequestResolver
-=======
 import com.tododuk.global.app.AppConfig
->>>>>>> 5d3cee2 (initial commit after .git removal)
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.web.SecurityFilterChain
-<<<<<<< HEAD
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-=======
->>>>>>> 5d3cee2 (initial commit after .git removal)
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -68,10 +60,7 @@ class SecurityConfig(
                     .requestMatchers("/uploads/**").permitAll()
                     // 위 요청 제외 나머지는 로그인 요구
                     .requestMatchers("/api/*/**").authenticated()
-<<<<<<< HEAD
-=======
                     .requestMatchers("/actuator/**").permitAll()
->>>>>>> 5d3cee2 (initial commit after .git removal)
                     .anyRequest().authenticated()
             }
             .headers { headers ->
@@ -95,11 +84,7 @@ class SecurityConfig(
                     .authenticationEntryPoint { _, response, _ ->
                         response.contentType = "application/json;charset=UTF-8"
                         // CORS 헤더 추가
-<<<<<<< HEAD
-                        response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000")
-=======
                         response.setHeader("Access-Control-Allow-Origin", AppConfig.siteFrontUrl)
->>>>>>> 5d3cee2 (initial commit after .git removal)
                         response.setHeader("Access-Control-Allow-Credentials", "true")
 
                         response.status = HttpServletResponse.SC_UNAUTHORIZED

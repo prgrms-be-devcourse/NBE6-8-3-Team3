@@ -1,22 +1,13 @@
 package com.tododuk.global.app
 
-<<<<<<< HEAD
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-=======
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
->>>>>>> 5d3cee2 (initial commit after .git removal)
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 
 @Configuration
-<<<<<<< HEAD
-class AppConfig {
-    // 비밀번호 암호화
-=======
 class AppConfig(
     environment: Environment,
     @Value("\${custom.site.cookieDomain}") cookieDomain: String,
@@ -30,13 +21,10 @@ class AppConfig(
         _siteBackUrl = siteBackUrl
     }
 
->>>>>>> 5d3cee2 (initial commit after .git removal)
     @Bean
     fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
     }
-<<<<<<< HEAD
-=======
 
     companion object {
         private lateinit var environment: Environment
@@ -67,5 +55,4 @@ class AppConfig(
         val siteFrontUrl: String by lazy { _siteFrontUrl }
         val siteBackUrl: String by lazy { _siteBackUrl }
     }
->>>>>>> 5d3cee2 (initial commit after .git removal)
 }
