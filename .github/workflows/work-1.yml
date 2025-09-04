@@ -56,7 +56,11 @@ jobs:
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
-	@@ -32,30 +64,222 @@ jobs:
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.create_tag.outputs.new_tag }}
+          release_name: Release ${{ steps.create_tag.outputs.new_tag }}
           body: ${{ steps.create_tag.outputs.changelog }}
           draft: false
           prerelease: false
@@ -79,6 +83,7 @@ jobs:
           # .env가 없으면 빌드 캐시가 매번 깨질 수 있으므로 항상 생성
           mkdir -p "${{ env.BACKEND_DIR }}"
           printf "%s" "${DOT_ENV}" > "${{ env.BACKEND_DIR }}/.env"
+
       - name: Docker Buildx 설치
         uses: docker/setup-buildx-action@v3
 
@@ -108,6 +113,7 @@ jobs:
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_REPOSITORY }}:${{ needs.makeTagAndRelease.outputs.tag_name }}
             ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_REPOSITORY }}:latest
+
   # ---------------------------------------------------------
   # 3) Blue/Green 무중단 배포 (EC2 + NPM 스위치)
   # ---------------------------------------------------------
@@ -133,6 +139,7 @@ jobs:
             --query "Reservations[].Instances[].InstanceId" --output text)
           [[ -n "${INSTANCE_ID}" && "${INSTANCE_ID}" != "None" ]] || { echo "No running instance found"; exit 1; }
           echo "INSTANCE_ID=${INSTANCE_ID}" >> "${GITHUB_ENV}"
+
       # 원격(SSM)으로 Blue/Green 스위치 수행
       - name: AWS SSM Send-Command
         uses: peterkimzz/aws-ssm-send-command@master
@@ -146,12 +153,14 @@ jobs:
           command: |
             #!/usr/bin/env bash
             set -Eeuo pipefail
+
             # ---------------------------------------------------------
             # 0) 실행 로그(라인 타임스탬프 부착)
             # ---------------------------------------------------------
             LOG="/tmp/ssm-$(date +%Y%m%d_%H%M%S).log"
             exec > >(awk '{ fflush(); print strftime("[%Y-%m-%d %H:%M:%S]"), $0 }' | tee -a "$LOG")
             exec 2> >(awk '{ fflush(); print strftime("[%Y-%m-%d %H:%M:%S]"), $0 }' | tee -a "$LOG" >&2)
+
             # ---------------------------------------------------------
             # 1) 변수 정의
             #    - 슬롯 이름은 고정(두 개의 컨테이너 이름)
@@ -167,8 +176,10 @@ jobs:
             SLOT2="${{ env.CONTAINER_2_NAME }}"
             PORT_IN="${{ env.CONTAINER_PORT }}"
             NET="${{ env.DOCKER_NETWORK }}"
+
             echo "🔹 Use image: ${IMAGE}"
             docker pull "${IMAGE}"
+
             # ---------------------------------------------------------
             # 2) Nginx Proxy Manager(NPM) API 토큰 발급
             #     - /etc/environment 등에 설정된 PASSWORD_1, APP_1_DOMAIN 사용 가정
@@ -176,19 +187,25 @@ jobs:
             TOKEN=$(curl -s -X POST http://127.0.0.1:81/api/tokens \
               -H "Content-Type: application/json" \
               -d "{\"identity\": \"admin@npm.com\", \"secret\": \"${PASSWORD_1:-}\"}" | jq -r '.token')
+
             # 토큰/도메인 검증(없으면 실패)
             [[ -n "${TOKEN}" && "${TOKEN}" != "null" ]] || { echo "NPM token issue failed"; exit 1; }
             [[ -n "${APP_1_DOMAIN:-}" ]] || { echo "APP_1_DOMAIN is empty"; exit 1; }
+
             # 대상 프록시 호스트 ID 조회(도메인 매칭)
             PROXY_ID=$(curl -s -X GET "http://127.0.0.1:81/api/nginx/proxy-hosts" \
               -H "Authorization: Bearer ${TOKEN}" \
               | jq ".[] | select(.domain_names[]==\"${APP_1_DOMAIN}\") | .id")
+
             [[ -n "${PROXY_ID}" && "${PROXY_ID}" != "null" ]] || { echo "Proxy host not found for ${APP_1_DOMAIN}"; exit 1; }
+
             # 현재 프록시가 바라보는 업스트림(컨테이너명) 조회
             CURRENT_HOST=$(curl -s -X GET "http://127.0.0.1:81/api/nginx/proxy-hosts/${PROXY_ID}" \
               -H "Authorization: Bearer ${TOKEN}" \
               | jq -r '.forward_host')
+
             echo "🔎 CURRENT_HOST: ${CURRENT_HOST:-none}"
+
             # ---------------------------------------------------------
             # 3) 역할(blue/green) 판정
             #    - blue : 현재 운영 중(CURRENT_HOST)
@@ -205,6 +222,7 @@ jobs:
               GREEN="${SLOT1}"
             fi
             echo "🎨 role -> blue(now): ${BLUE}, green(next): ${GREEN}"
+
             # ---------------------------------------------------------
             # 4) green 역할 컨테이너 재기동
             #    - 같은 네트워크 상에서 NPM이 컨테이너명:PORT로 프록시하므로 -p 불필요
@@ -216,6 +234,7 @@ jobs:
               -v /uploads:/app/uploads \
               -e TZ=Asia/Seoul \
               "${IMAGE}"
+
             # ---------------------------------------------------------
             # 5) 헬스체크 (/actuator/health 200 OK까지 대기)
             # ---------------------------------------------------------
@@ -224,6 +243,7 @@ jobs:
             INTERVAL=3
             ELAPSED=0
             sleep 8  # 초기 부팅 여유
+
             while (( ELAPSED < TIMEOUT )); do
               CODE=$(docker exec "${GREEN}" curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT_IN}/actuator/health" || echo 000)
               [[ "${CODE}" == "200" ]] && { echo "✅ ${GREEN} healthy"; break; }
@@ -231,6 +251,7 @@ jobs:
               ELAPSED=$((ELAPSED + INTERVAL))
             done
             [[ "${CODE:-000}" == "200" ]] || { echo "❌ ${GREEN} health failed"; docker logs --tail=200 "${GREEN}" || true; docker rm -f "${GREEN}" || true; exit 1; }
+
             # ---------------------------------------------------------
             # 6) 업스트림 전환 (forward_host/forward_port만 업데이트)
             # ---------------------------------------------------------
@@ -240,6 +261,7 @@ jobs:
               -H "Content-Type: application/json" \
               -d "${NEW_CFG}" >/dev/null
             echo "🔁 switch upstream → ${GREEN}:${PORT_IN}"
+
             # ---------------------------------------------------------
             # 7) 이전 blue 종료(최초 배포면 생략)
             # ---------------------------------------------------------
@@ -247,6 +269,7 @@ jobs:
               docker rm -f "${BLUE}" >/dev/null 2>&1 || true
               echo "🧹 removed old blue: ${BLUE}"
             fi
+
             # ---------------------------------------------------------
             # 8) 이미지 정리(현재 태그/ latest 제외) - 결과 없음도 오류 아님
             #     - pipefail과 grep의 종료코드(1)를 고려해 블록 전체에 || true 적용
@@ -258,4 +281,5 @@ jobs:
                 | grep -v -F ":latest" \
                 | xargs -r docker rmi
             } || true
+
             echo "🏁 Blue/Green switch complete. now blue = ${GREEN}"
