@@ -7,7 +7,7 @@ spring:
       host: redis_1
       password: ${SPRING__DATA__REDIS__PASSWORD}
   datasource:
-    url: jdbc:mysql://mysql_1:3306/${SPRING__DATASOURCE__URL___DB_NAME}
+    url: jdbc:mysql://172.17.0.1:3306/${SPRING__DATASOURCE__URL___DB_NAME}
     username: lldjlocal
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
